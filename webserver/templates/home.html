@@ -1,0 +1,24 @@
+<html>
+	<h1>Groupr</h1>
+  	<p> Groupr is the best way to create and join Study Groups!</p>
+	<body>
+		<p> Signed in as {{user_email}}</p>
+		<form method="GET" action="http://chalice.cloudapp.net:8111/creategroup/">
+			<input type="submit" value="Create Your Own Group">
+		</form>
+		<form method="GET" action="http://chalice.cloudapp.net:8111/search/">
+			<input type="text" name="query"/><br/>
+			<div class="onoffswitch">
+				Open Groups:
+    			<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="myonoffswitch" checked>
+    				<label class="onoffswitch-label" for="myonoffswitch">
+        			<span class="onoffswitch-inner"></span>
+        			<span class="onoffswitch-switch"></span>
+    			</label>
+			</div>
+			<input type="submit" value="Search"/></br>
+		</form>
+			<div id="results">
+			</div>
+	</body>
+</html>

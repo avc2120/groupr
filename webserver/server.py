@@ -66,6 +66,8 @@ engine = create_engine(DATABASEURI)
 # The setup code should be deleted once you switch to using the Part 2 postgresql database
 #
 engine.execute("""DROP TABLE IF EXISTS users;""")
+engine.execute("""DROP TABLE IF EXISTS groups;""")
+
 engine.execute("""CREATE TABLE users(
   user_email text, 
   name text,
@@ -75,6 +77,16 @@ engine.execute("""CREATE TABLE users(
   description text, 
   housing text,
   PRIMARY KEY (user_email)
+  );""")
+engine.execute("""CREATE TABLE groups(
+  group_id int,
+  user_email text,
+  description text,
+  size_limit int,
+  is_limited boolean,
+  status text CHECK (status = 'open' OR status = 'closed'),
+  FOREIGN KEY (user_email) REFERENCES users,
+  PRIMARY KEY(group_id)
   );""")
 # engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
 #
@@ -108,6 +120,21 @@ def teardown_request(exception):
   except Exception as e:
     pass
 
+@app.route("/signup/", methods=["POST", "GET"])
+def signup():
+  email = request.args["email"]
+  username = request.args["username"]
+  major = request.args["major"]
+  gender = request.args["gender"]
+  year = request.args["year"]
+  description = request.args["description"]
+  housing = request.args["housing"]
+
+  print email, username, gender, major, int(year), housing, description
+  engine.execute("INSERT INTO users VALUES(?,?,?,?,?,?,?);", email, username, major, gender, int(year), description, housing)
+  #engine.execute(text('INSERT INTO users(user_email, name, gender, major, year, description, housing) VALUES(:mail, :name, :maj, :gen, :yr, :des, :house);'), mail = email, name = username, maj = major, gen = gender, yr =  4, des = description, house = housing)
+  return render_template("home.html", user_email=email)
+
 @app.route("/getLogin/", methods=["POST","GET"])
 def getLogin():
   return render_template("login.html", error="")
@@ -117,31 +144,27 @@ def login():
   email = request.args["email"]
   username = request.args["username"]
   print email, username
-  print ("SELECT * FROM users WHERE users.user_email = '{}';".format(email))
-  cursor = g.conn.execute("""SELECT * FROM users WHERE user_email=?;""", email)
+  #print ("SELECT * FROM users WHERE users.user_email = '{}';".format(email))
+  cursor = g.conn.execute("""SELECT * FROM users WHERE user_email=? AND name=?;""", email, username)
   print "hello"
   count = 0
   for item in cursor:
     count += 1
   if count == 1:
-    print "Successfully Logged In!"
+    return render_template("home.html", user_email=email)
   else:
     return render_template("login.html", error="Invalid Email and/or Username")
 
-@app.route("/signup/", methods=["POST", "GET"])
-def signup():
-  email = request.args["email"]
-  username = request.args.get("username")
-  major = request.args.get("major")
-  gender = request.args.get("gender")
-  year = request.args.get("year")
-  description = request.args.get("description")
-  housing = request.args.get("housing")
+@app.route("/search/", methods=["POST", "GET"])
+def search():
+  query = request.args["query"]
+  print query
+  cursor = g.conn.execute("""SELECT * FROM groups""")
+  results = []
+  for item in cursor:
+    if query in item['description']:
+      results.append(item['description'])
 
-  print email, username, gender, major, int(year), housing, description
-  engine.execute("INSERT INTO users VALUES(?,?,?,?,?,?,?);", email, username, major, gender, int(year), description, housing)
-  #engine.execute(text('INSERT INTO users(user_email, name, gender, major, year, description, housing) VALUES(:mail, :name, :maj, :gen, :yr, :des, :house);'), mail = email, name = username, maj = major, gen = gender, yr =  4, des = description, house = housing)
-  return "Successfully Created Account!"
 #
 # @app.route is a decorator around index() that means:
 #   run index() whenever the user tries to access the "/" path using a POST or GET request
