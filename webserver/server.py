@@ -65,17 +65,21 @@ engine = create_engine(DATABASEURI)
 # 
 # The setup code should be deleted once you switch to using the Part 2 postgresql database
 #
-# engine.execute("""DROP TABLE IF EXISTS test;""")
-# engine.execute("""CREATE TABLE IF NOT EXISTS test (
-#   id serial,
-#   name text
-# );""")
+engine.execute("""DROP TABLE IF EXISTS users;""")
+engine.execute("""CREATE TABLE users(
+  user_email text, 
+  name text,
+  major text, 
+  gender text,
+  year int CHECK (year > 0 AND year <=5), /*year 5 = all graduate students*/
+  description text, 
+  housing text,
+  PRIMARY KEY (user_email)
+  );""")
 # engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
-# #
-# # END SQLITE SETUP CODE
-# #
-
-
+#
+# END SQLITE SETUP CODE
+#
 
 @app.before_request
 def before_request():
@@ -115,15 +119,17 @@ def login():
 
 @app.route("/signup/", methods=["POST", "GET"])
 def signup():
-  print request.args
-  email = request.args.get["email"]
-  username = request.args.get["username"]
-  gender = request.args.get["gender"]
-  major = request.args.get["major"]
-  year = request.args.get["year"]
-  housing = request.args.get["housing"]
-  description = request.args.get["description"]
-  engine.execute(text('INSERT INTO users(user_email, name, gender, major, year, description, housing) VALUES(:mail, :name, :maj, :gen, :yr, :des, :house)'), mail = email, name = username, maj = major, gen = gender, yr =  4, des = description, house = housing)
+  email = request.args["email"]
+  username = request.args.get("username")
+  major = request.args.get("major")
+  gender = request.args.get("gender")
+  year = request.args.get("year")
+  description = request.args.get("description")
+  housing = request.args.get("housing")
+
+  print email, username, gender, major, int(year), housing, description
+  engine.execute("INSERT INTO users VALUES(?,?,?,?,?,?,?);", email, username, major, gender, int(year), description, housing)
+  #engine.execute(text('INSERT INTO users(user_email, name, gender, major, year, description, housing) VALUES(:mail, :name, :maj, :gen, :yr, :des, :house);'), mail = email, name = username, maj = major, gen = gender, yr =  4, des = description, house = housing)
   return "Successfully Created Account!"
 #
 # @app.route is a decorator around index() that means:
