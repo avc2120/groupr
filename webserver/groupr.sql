@@ -12,6 +12,7 @@ create table users(
   
 create table groups(
   group_id int,
+  group_name text,
   user_email text,
   description text,
   size_limit int,
