@@ -112,10 +112,21 @@ def teardown_request(exception):
 def getLogin():
   return render_template("login.html", error="")
 
+@app.route("/login/", methods=["POST", "GET"])
 def login():
-  email = request.args.get["email"]
-  username = request.args.get["username"]
-  engine.execute("SELECT * FROM users WHERE users.user_email = ?;", email)
+  email = request.args["email"]
+  username = request.args["username"]
+  print email, username
+  print ("SELECT * FROM users WHERE users.user_email = '{}';".format(email))
+  cursor = g.conn.execute("""SELECT * FROM users WHERE user_email=?;""", email)
+  print "hello"
+  count = 0
+  for item in cursor:
+    count += 1
+  if count == 1:
+    print "Successfully Logged In!"
+  else:
+    return render_template("login.html", error="Invalid Email and/or Username")
 
 @app.route("/signup/", methods=["POST", "GET"])
 def signup():
