@@ -3,7 +3,7 @@ create table users(
   user_email text, 
   name text,
   major text, 
-  gender text CHECK (gender = 'F' OR gender = 'M'), 
+  gender text CHECK (gender = 'Female' OR gender = 'Male'), 
   year int CHECK (year > 0 AND year <=5), /*year 5 = all graduate students*/
   description text, 
   housing text,

@@ -2,22 +2,22 @@
   <body>
     <h1>Groupr</h1>
     <p> Groupr is the best way to create and join Study Groups!</p>
-    <form method="GET" action="http://chalice.cloudapp.net:8111/groups/">
+    <form method="GET" action="http://chalice.cloudapp.net:8111/signup/">
       Email: <input type="text" name="email"/><br/>
       Username: <input type="text" name="username"/><br/>
-      Gender: <select>
+      Gender: <select name="gender">
                 <option value="Female">Female</option>
                 <option value="Male">Male</option>
               </select></br>
       Major:  <input type="text" name="major"/><br/>
-      Year:   <select>
+      Year:   <select name="year">
                 <option value=1>1</option>
                 <option value=2>2</option>
                 <option value=3>3</option>
                 <option value=4>4</option>
                 <option value=5>5</option>
               </select><br/>
-      Housing: <select>
+      Housing: <select name="housing">
                   <option value="Claremont">47 Claremont</option>
                   <option value="600West">600 West 113th Street</option>
                   <option value="Broadway">Broadway Hall</option>
@@ -41,12 +41,13 @@
                   <option value="Wein">Wein Hall</option>
                   <option value="Woodbridge">Woodbridge Hall</option>
                 </select><br/>
+      <input type="text" name="description"/><br/>
       <input type="submit" value="Sign Up"/>
+
     </form>
     Already Have An Account?
-    <form method="GET" action="http://chalice.cloudapp.net:8111/login/">
+    <form method="GET" action="http://chalice.cloudapp.net:8111/getLogin/">
     <input type="submit" value="Log In"/>
     </form>
-    <a href="http://chalice.cloudapp.net:81111/login.html">Log In</a>
   </body>
 </html>
