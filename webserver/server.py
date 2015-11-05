@@ -104,17 +104,9 @@ def teardown_request(exception):
   except Exception as e:
     pass
 
-@app.route("/hello/", methods=["POST","GET"])
-def myfirstappfunction():
-  print request.args
-  print "\n" 
-  print request.args["name"]
-  print request.args["age"]
-  if int(request.args["age"]) <50:
-    return render_template("index.html", title="boohoo")
-  else:
-    return "boy you are old"
-  return "hello world"
+@app.route("/login/", methods=["POST","GET"])
+def login():
+  return render_template("login.html", error="")
 #
 # @app.route is a decorator around index() that means:
 #   run index() whenever the user tries to access the "/" path using a POST or GET request
