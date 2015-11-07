@@ -9,7 +9,6 @@ import math as m
 import os
 import datetime
 from sqlalchemy import *
-# from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, session, url_for, escape
 
@@ -56,25 +55,30 @@ def teardown_request(exception):
   except Exception as e:
     pass
 
-@app.route("/signup/", methods=["GET", "POST"])
-def signup():
-  email = request.form["email"]
-  print email
-  cursor = g.conn.execute("SELECT * FROM users WHERE user_email=?;", email)
-  if len(cursor.fetchall()) == 1:
-    return render_template("index.html", invalid_email="This email already has an account")
-  print "Sucessfully Created New Account"
-  session["email"] = email
-  session["username"] = username = request.form["username"]
-  session["major"] = major = request.form["major"]
-  session["gender"] = gender = request.form["gender"]
-  session["year"] = year = int(request.form["year"])
-  session["description"] = description = request.form["description"]
-  session["housing"] = housing = request.form["housing"]
+@app.route('/', methods=["POST", "GET"])
+def index():
+  if request.method == "POST":
+    email = request.form["email"]
+    print email
+    cursor = g.conn.execute("SELECT * FROM users WHERE user_email=?;", email)
+    if len(cursor.fetchall()) == 1:
+      return render_template("index.html", error="This email already has an account")
+    session["email"] = email
+    session["username"] = username = request.form["username"]
+    session["major"] = major = request.form["major"]
+    session["gender"] = gender = request.form["gender"]
+    session["year"] = year = int(request.form["year"])
+    session["description"] = description = request.form["description"]
+    session["housing"] = housing = request.form["housing"]
 
-  print email, username, gender, major, year, housing, description
-  engine.execute("INSERT INTO users VALUES(?,?,?,?,?,?,?);", email, username, major, gender, year, description, housing)
-  return render_template("home.html", user_email=email)
+    my_args =  (email, username, gender, major, year, housing, description)
+    if "" in my_args:
+      return render_template("index.html", error="Please fill out all required fields" )
+    engine.execute("INSERT INTO users VALUES(?,?,?,?,?,?,?);", email, username, major, gender, year, description, housing)
+    print "Sucessfully Created New Account"
+    return render_template("home.html", user_email=email)
+  else:
+    return render_template("index.html")
 
 @app.route("/login/", methods=["POST", "GET"])
 def login():
@@ -167,13 +171,6 @@ def postInGroup():
   cursor.close()
   context = dict( data = result )
   return render_template("group.html", user_email=session["email"], group_name=group_name, group_description=group_des, group_admin=session["email"], **context)
-
-# see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
-# see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
-@app.route('/', methods=["POST", "GET"])
-def index():
-  return render_template("index.html")
-
 
 if __name__ == "__main__":
   import click
