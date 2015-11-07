@@ -1,6 +1,18 @@
 <html>
 	<h1>Groupr</h1>
   	<p> Groupr is the best way to create and join Study Groups!</p>
+  	<form method= "GET" action="http://chalice.cloudapp.net:8111/home/">
+  		<input type="submit" value="Home"/>
+  	</form>
+  	<form method= "GET" action="http://chalice.cloudapp.net:8111/profile/">
+  		<input type="submit" value="Profile"/>
+  	</form>
+  	  	<form method= "GET" action="http://chalice.cloudapp.net:8111/group/">
+  		<input type="submit" value="Groups"/>
+  	</form>
+  	  	<form method= "GET" action="http://chalice.cloudapp.net:8111/logout/">
+  		<input type="submit" value="Sign Out"/>
+  	</form>
 	<body>
 		<p> Signed in as {{user_email}}</p>
 		<form method="GET" action="http://chalice.cloudapp.net:8111/gotocreategroup/">
