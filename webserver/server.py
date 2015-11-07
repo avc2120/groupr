@@ -1,36 +1,33 @@
 #!/usr/bin/env python2.7
-
-"""
-Columbia W4111 Intro to databases
-Example webserver
-
-To run locally
-
-    python server.py
-
-Go to http://localhost:8111 in your browser
-
-
-A debugger such as "pdb" may be helpful for debugging.
-Read about it online.
-
-eugene wu 2015
-"""
-
+#########################################
+#GROUPR:
+#COMS W4111: Databases
+#Names: Alice Chang, Mango Yumeng Liao
+#########################################
+import math
 import os
 import datetime
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
-#requests - global object that handles the current request
-#g - global object
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
+DATABASEURI = "sqlite:///groupr.db"
+
+engine = create_engine(DATABASEURI)
+Session = sessionmaker(bind=engine)
+Session = Session()
+
+cursor = engine.execute("SELECT * FROM groups;")
+count = 0
+for item in cursor:
+  count = math.max(count, item['group_id'])
+
+group_id = count
 groupid_postid = {}
-group_id = 0
 my_email = ""
 my_username = ""
 my_major = ""
@@ -38,29 +35,6 @@ my_gender = ""
 my_year = 0
 my_housing = ""
 cur_group_id = 0
-#
-# The following uses the sqlite3 database test.db -- you can use this for debugging purposes
-# However for the project you will need to connect to your Part 2 database in order to use the
-# data
-#
-# XXX: The URI should be in the format of: 
-#
-#     postgresql://USER:PASSWORD@w4111db1.cloudapp.net:5432/proj1part2
-#
-# For example, if you had username ewu2493, password foobar, then the following line would be:
-#
-#     DATABASEURI = "postgresql://ewu2493:foobar@w4111db1.cloudapp.net:5432/proj1part2"
-
-DATABASEURI = "sqlite:///groupr.db"
-
-
-#
-# This line creates a database engine that knows how to connect to the URI above
-#
-engine = create_engine(DATABASEURI)
-Session = sessionmaker(bind=engine)
-Session = Session()
-
 #
 # START SQLITE SETUP CODE
 #
@@ -76,45 +50,43 @@ Session = Session()
 # 
 # The setup code should be deleted once you switch to using the Part 2 postgresql database
 #
-engine.execute("""DROP TABLE IF EXISTS users;""")
-engine.execute("""DROP TABLE IF EXISTS groups;""")
-engine.execute("""DROP TABLE IF EXISTS board_posted;""")
+# engine.execute("""DROP TABLE IF EXISTS users;""")
+# engine.execute("""DROP TABLE IF EXISTS groups;""")
+# engine.execute("""DROP TABLE IF EXISTS board_posted;""")
 
-engine.execute("""CREATE TABLE users(
-  user_email text, 
-  name text,
-  major text, 
-  gender text,
-  year int CHECK (year > 0 AND year <=5), /*year 5 = all graduate students*/
-  description text, 
-  housing text,
-  PRIMARY KEY (user_email)
-  );""")
-engine.execute("""CREATE TABLE groups(
-  group_id int,
-  group_name text,
-  user_email text,
-  description text,
-  size_limit int,
-  is_limited boolean,
-  status text CHECK (status = 'open' OR status = 'closed'),
-  FOREIGN KEY (user_email) REFERENCES users,
-  PRIMARY KEY(group_id)
-  );""")
-engine.execute("""CREATE table board_posted(
-  post_id int,
-  group_id int,
-  date_time timestamp,
-  message text,
-  user_email text NOT NULL,
-  PRIMARY KEY(post_id, user_email),
-  FOREIGN KEY(group_id) REFERENCES groups,
-  FOREIGN KEY(user_email) REFERENCES users
-    ON DELETE CASCADE
-  );""")
-# engine.execute("INSERT INTO groups VALUES(?,?,?,?,?,?,?);", 1, "Databases", "changvalice", "HI", 3, True , "open")
-# engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
-#
+# engine.execute("""CREATE TABLE users(
+#   user_email text, 
+#   name text,
+#   major text, 
+#   gender text,
+#   year int CHECK (year > 0 AND year <=5), /*year 5 = all graduate students*/
+#   description text, 
+#   housing text,
+#   PRIMARY KEY (user_email)
+#   );""")
+# engine.execute("""CREATE TABLE groups(
+#   group_id int,
+#   group_name text,
+#   user_email text,
+#   description text,
+#   size_limit int,
+#   is_limited boolean,
+#   status text CHECK (status = 'open' OR status = 'closed'),
+#   FOREIGN KEY (user_email) REFERENCES users,
+#   PRIMARY KEY(group_id)
+#   );""")
+# engine.execute("""CREATE table board_posted(
+#   post_id int,
+#   group_id int,
+#   date_time timestamp,
+#   message text,
+#   user_email text NOT NULL,
+#   PRIMARY KEY(post_id, user_email),
+#   FOREIGN KEY(group_id) REFERENCES groups,
+#   FOREIGN KEY(user_email) REFERENCES users
+#     ON DELETE CASCADE
+#   );""")
+
 # END SQLITE SETUP CODE
 #
 
@@ -200,6 +172,7 @@ def login():
 
 
   if count == 1:
+    my_email = email
     return render_template("home.html", user_email=email)
   else:
     return render_template("login.html", error="Invalid Email and/or Username")
@@ -208,12 +181,14 @@ def login():
 def search():
   query = request.args["query"]
   print query
-  cursor = g.conn.execute("""SELECT * FROM groups""")
+  cursor = g.conn.execute("SELECT * FROM groups;")
   results = []
   for item in cursor:
-    if query in item['description']:
-      results.append(item['description'])
+    if query.lower() in item['group_name'].lower():
+      results.append(item)
   cursor.close()
+  context = dict(data = results)
+  return render_template("home.html", **context)
 
 @app.route("/gotocreategroup/", methods=["POST", "GET"])
 def goToCreateGroup():
@@ -270,77 +245,11 @@ def postInGroup():
   context = dict( data = result )
   return render_template("group.html", user_email=my_email, group_name=group_name, group_description=group_des, group_admin=my_email, **context)
 
-#
-# @app.route is a decorator around index() that means:
-#   run index() whenever the user tries to access the "/" path using a POST or GET request
-#
-# If you wanted the user to go to e.g., localhost:8111/foobar/ with POST or GET then you could use
-#
-#       @app.route("/foobar/", methods=["POST", "GET"])
-#
-# PROTIP: (the trailing / in the path is important)
-# 
 # see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 # 
 @app.route('/', methods=["POST", "GET"])
 def index():
-  """
-  request is a special object that Flask provides to access web request information:
-
-  request.method:   "GET" or "POST"
-  request.form:     if the browser submitted a form, this contains the data in the form
-  request.args:     dictionary of URL arguments e.g., {a:1, b:2} for http://localhost?a=1&b=2
-
-  See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
-  """
-
-  # DEBUG: this is debugging code to see what request looks like
-  # print request.args
-
-
-  #
-  # example of a database query
-  #
-  # cursor = g.conn.execute("SELECT name FROM test")
-  # names = []
-  # for result in cursor:
-  #   names.append(result['name'])  # can also be accessed using result[0]
-  # cursor.close()
-
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/blog/python/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #     
-  #     # creates a <div> tag for each element in data
-  #     # will print: 
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
-  # context = dict( data = names )
-
-
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
   return render_template("index.html")
 
 if __name__ == "__main__":

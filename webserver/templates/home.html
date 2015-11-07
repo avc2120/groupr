@@ -18,7 +18,11 @@
 			</div>
 			<input type="submit" value="Search"/></br>
 		</form>
-			<div id="results">
-			</div>
+		{%for n in data%}
+		<div>
+			{{ n['group_name'] }} 
+			{{ n['description'] }}
+		</div>
+		{% endfor %}
 	</body>
 </html>
