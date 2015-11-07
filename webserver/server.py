@@ -251,7 +251,8 @@ def createGroup():
 @app.route("/gotogroup/", methods=["POST","GET"])
 def postInGroup():
   post = request.args["post"]
-  post_id = groupid_postid[group_id]
+  groupid_postid[cur_group_id] += 1
+  post_id = groupid_postid[cur_group_id]
   date_time = datetime.datetime.now()
   engine.execute("INSERT INTO board_posted VALUES(?,?,?,?,?);", post_id, cur_group_id, date_time, post, my_email)
   print "succesfully inserted"
