@@ -18,7 +18,7 @@ app.secret_key = os.urandom(24)
 
 DATABASEURI = "sqlite:///groupr.db"
 engine = create_engine(DATABASEURI)
-setup.dataSetup(engine)
+#setup.dataSetup(engine)
 cursor = engine.execute("SELECT * FROM groups;")
 count = 0
 for item in cursor:
