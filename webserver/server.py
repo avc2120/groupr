@@ -59,7 +59,6 @@ def teardown_request(exception):
 def index():
   if request.method == "POST":
     email = request.form["email"]
-    print email
     cursor = g.conn.execute("SELECT * FROM users WHERE user_email=?;", email)
     if len(cursor.fetchall()) == 1:
       return render_template("index.html", error="This email already has an account")
@@ -76,37 +75,47 @@ def index():
       return render_template("index.html", error="Please fill out all required fields" )
     engine.execute("INSERT INTO users VALUES(?,?,?,?,?,?,?);", email, username, major, gender, year, description, housing)
     print "Sucessfully Created New Account"
-    return render_template("home.html", user_email=email)
+    return render_template("home.html", user_email=email, data=[])
   else:
     return render_template("index.html")
 
 @app.route("/login/", methods=["POST", "GET"])
 def login():
   if request.method == "POST":
-    session["email"] = email = request.form["email"]
-    session["username"] = username = request.form["username"]
+    email = request.form["email"]
+    username = request.form["username"]
     cursor = g.conn.execute("""SELECT * FROM users WHERE user_email=? AND name=?;""", email, username)
     results = cursor.fetchall()
     print len(results)
     if len(results) == 1:  
       print results
       result = results[0]
-      print result
+      session["email"] = email
+      session["username"] = username
       session["major"] = result["major"]
       session["gender"] = result["gender"]
       session["year"] = int(result["year"])
       session["housing"] = result["housing"]
+      print session
       return render_template("home.html", user_email=email)
     else:
       return render_template("login.html", error="Invalid Email and/or Username")
   else:
     return render_template("login.html", error="")
 
-@app.route("/logout/")
-def logout():
-  session.pop("username", None)
-  session.pop("email", None)
-  return redirect(url_for("index"))
+@app.route("/navigate/")
+def navigate():
+  print request.args.keys()
+  if "signout" in request.args.keys():
+    session.pop("username", None)
+    session.pop("email", None)
+    return redirect(url_for("index"))
+  elif "groups" in request.args.keys():
+    return render_template("group.html")
+  elif "home" in request.args.keys():
+    return render_template("home.html", user_email = session["email"])
+  else:
+    return redirect(url_for("profile"))
 
 @app.route("/search/", methods=["POST", "GET"])
 def search():

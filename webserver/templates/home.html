@@ -5,17 +5,11 @@
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 	<h1>Groupr</h1>
   	<p> Groupr is the best way to create and join Study Groups!</p>
-  	<form method= "GET" action="http://chalice.cloudapp.net:8111/home/">
-  		<input type="submit" value="Home"/>
-  	</form>
-  	<form method= "GET" action="http://chalice.cloudapp.net:8111/profile/">
-  		<input type="submit" value="Profile"/>
-  	</form>
-  	  	<form method= "GET" action="http://chalice.cloudapp.net:8111/group/">
-  		<input type="submit" value="Groups"/>
-  	</form>
-  	  	<form method= "GET" action="http://chalice.cloudapp.net:8111/logout/">
-  		<input type="submit" value="Sign Out"/>
+  	<form method= "GET" action="http://chalice.cloudapp.net:8111/navigate">
+  		<input type="submit" name="home" value="Home"/>
+  		<input type="submit" name="profile" value="Profile"/>
+  		<input type="submit" name="groups" value="Groups"/>
+  		<input type="submit" name="signout" value="Sign Out"/>
   	</form>
 	<body>
 		<p> Signed in as {{user_email}}</p>
@@ -34,11 +28,16 @@
 			</div>
 			<input type="submit" value="Search"/></br>
 		</form>
+
+		<table style="width:100%">
 		{%for n in data%}
-		<div>
-			{{ n['group_name'] }} 
-			{{ n['description'] }}
-		</div>
-		{% endfor %}
+  		<tr>
+    		<td>{{ n["group_name"] }} </td>
+    		<td>{{ n["description"] }}</td> 
+    		<td>{{ n["user_email"] }}</td> 
+    		<td>{{ n["status"] }}</td>
+  		</tr>
+  		{% endfor %}
+ 		</table>
 	</body>
 </html>
