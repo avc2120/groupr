@@ -27,7 +27,13 @@ from flask import Flask, request, render_template, g, redirect, Response
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
-
+group_id = 0
+my_email = ""
+my_username = ""
+my_major = ""
+my_gender = ""
+my_year = 0
+my_housing = ""
 #
 # The following uses the sqlite3 database test.db -- you can use this for debugging purposes
 # However for the project you will need to connect to your Part 2 database in order to use the
@@ -80,6 +86,7 @@ engine.execute("""CREATE TABLE users(
   );""")
 engine.execute("""CREATE TABLE groups(
   group_id int,
+  group_name text,
   user_email text,
   description text,
   size_limit int,
@@ -88,6 +95,7 @@ engine.execute("""CREATE TABLE groups(
   FOREIGN KEY (user_email) REFERENCES users,
   PRIMARY KEY(group_id)
   );""")
+# engine.execute("INSERT INTO groups VALUES(?,?,?,?,?,?,?);", 1, "Databases", "changvalice", "HI", 3, True , "open")
 # engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
 #
 # END SQLITE SETUP CODE
@@ -130,6 +138,14 @@ def signup():
   description = request.args["description"]
   housing = request.args["housing"]
 
+  global my_email, my_username, my_major, my_gender, my_year, my_housing
+  my_email = email
+  my_username = username
+  my_major = major
+  my_gender = gender
+  my_year = int(year)
+  my_housing = housing
+
   print email, username, gender, major, int(year), housing, description
   engine.execute("INSERT INTO users VALUES(?,?,?,?,?,?,?);", email, username, major, gender, int(year), description, housing)
   #engine.execute(text('INSERT INTO users(user_email, name, gender, major, year, description, housing) VALUES(:mail, :name, :maj, :gen, :yr, :des, :house);'), mail = email, name = username, maj = major, gen = gender, yr =  4, des = description, house = housing)
@@ -148,8 +164,16 @@ def login():
   cursor = g.conn.execute("""SELECT * FROM users WHERE user_email=? AND name=?;""", email, username)
   print "hello"
   count = 0
-  for item in cursor:
+
+  global my_email, my_username, my_major, my_gender, my_year, my_housing
+  for result in cursor:
+    my_major = result["major"]
+    my_gender = result["gender"]
+    my_year = int(result["year"])
+    my_housing = result["housing"]
     count += 1
+
+
   if count == 1:
     return render_template("home.html", user_email=email)
   else:
@@ -165,6 +189,36 @@ def search():
     if query in item['description']:
       results.append(item['description'])
 
+@app.route("/gotocreategroup/", methods=["POST", "GET"])
+def goToCreateGroup():
+  return render_template("creategroup.html")
+
+@app.route("/creategroup/", methods=["POST", "GET"])
+def createGroup():
+  global group_id, my_email
+  group_id += 1
+  group_name = request.args["groupname"]
+  group_des = request.args["description"]
+  group_lim = int(request.args["limit"])
+  group_status = request.args["status"]
+  group_status_string = "closed"
+
+  is_limited = True
+  if(group_lim == None):
+    is_limited = False
+  if (group_status == "on"):
+    group_status_string = "open"
+
+  print group_name, group_des, group_lim, group_status
+  print group_id, group_name, my_email, group_des, int(group_lim), group_status_string
+  engine.execute("INSERT INTO groups VALUES(?,?,?,?,?,?,?);", int(group_id), group_name, my_email, group_des, int(group_lim), is_limited, group_status_string)
+  print "Success!"
+  if(is_limited):
+    return render_template("group.html", user_email=my_email, 
+      group_name=group_name, group_description=group_des, group_admin=my_email, size_limit=group_lim)
+  else:
+    return render_template("group.html", user_email=my_email, 
+      group_name=group_name, group_description=group_des, group_admin=my_email)
 #
 # @app.route is a decorator around index() that means:
 #   run index() whenever the user tries to access the "/" path using a POST or GET request

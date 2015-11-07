@@ -2,11 +2,12 @@
   <body>
     <h1>Groupr</h1>
     <p> Groupr is the best way to create and join Study Groups!</p>
-    <form method="GET" action="http://chalice.cloudapp.net:8111/groupcreated/">
+    <form method="GET" action="http://chalice.cloudapp.net:8111/creategroup/">
       Group Name: <input type="text" name="groupname"/><br/>
       Description: <input type="text" name="description"/><br/>
       Size Limit: <input type="text" name="limit"/><br/>
       Open Group: <input type="checkbox" name="status" checked/><br/>
+      <input type="submit" value="Create Group"/>
     </form>
   </body>
 </html>
