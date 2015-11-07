@@ -2,7 +2,9 @@
   <body>
     <h1>Groupr</h1>
     <p> Groupr is the best way to create and join Study Groups!</p>
+
     <form method="GET" action="http://chalice.cloudapp.net:8111/signup/">
+      <p>{{invalid_email}}</p>
       Email: <input type="text" name="email"/><br/>
       Username: <input type="text" name="username"/><br/>
       Gender: <select name="gender">

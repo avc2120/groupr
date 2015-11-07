@@ -19,6 +19,7 @@ eugene wu 2015
 
 import os
 from sqlalchemy import *
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
 #requests - global object that handles the current request
@@ -54,7 +55,8 @@ DATABASEURI = "sqlite:///groupr.db"
 # This line creates a database engine that knows how to connect to the URI above
 #
 engine = create_engine(DATABASEURI)
-
+Session = sessionmaker(bind=engine)
+Session = Session()
 
 #
 # START SQLITE SETUP CODE
@@ -138,6 +140,14 @@ def signup():
   description = request.args["description"]
   housing = request.args["housing"]
 
+  cursor = g.conn.execute("SELECT * FROM users WHERE user_email=?;", email)
+  # print session.query(users).filter_by(user_email=email)
+
+  count = 0
+  for item in cursor:
+    count += 1
+  if count == 1:
+    return render_template("index.html", invalid_email="This email already has an account")
   global my_email, my_username, my_major, my_gender, my_year, my_housing
   my_email = email
   my_username = username
