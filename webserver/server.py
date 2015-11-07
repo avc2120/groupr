@@ -18,6 +18,7 @@ eugene wu 2015
 """
 
 import os
+import datetime
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
@@ -28,6 +29,7 @@ from flask import Flask, request, render_template, g, redirect, Response
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
+groupid_postid = {}
 group_id = 0
 my_email = ""
 my_username = ""
@@ -35,6 +37,7 @@ my_major = ""
 my_gender = ""
 my_year = 0
 my_housing = ""
+cur_group_id = 0
 #
 # The following uses the sqlite3 database test.db -- you can use this for debugging purposes
 # However for the project you will need to connect to your Part 2 database in order to use the
@@ -75,6 +78,7 @@ Session = Session()
 #
 engine.execute("""DROP TABLE IF EXISTS users;""")
 engine.execute("""DROP TABLE IF EXISTS groups;""")
+engine.execute("""DROP TABLE IF EXISTS board_posted;""")
 
 engine.execute("""CREATE TABLE users(
   user_email text, 
@@ -96,6 +100,17 @@ engine.execute("""CREATE TABLE groups(
   status text CHECK (status = 'open' OR status = 'closed'),
   FOREIGN KEY (user_email) REFERENCES users,
   PRIMARY KEY(group_id)
+  );""")
+engine.execute("""CREATE table board_posted(
+  post_id int,
+  group_id int,
+  date_time timestamp,
+  message text,
+  user_email text NOT NULL,
+  PRIMARY KEY(post_id, user_email),
+  FOREIGN KEY(group_id) REFERENCES groups,
+  FOREIGN KEY(user_email) REFERENCES users
+    ON DELETE CASCADE
   );""")
 # engine.execute("INSERT INTO groups VALUES(?,?,?,?,?,?,?);", 1, "Databases", "changvalice", "HI", 3, True , "open")
 # engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
@@ -198,6 +213,7 @@ def search():
   for item in cursor:
     if query in item['description']:
       results.append(item['description'])
+  cursor.close()
 
 @app.route("/gotocreategroup/", methods=["POST", "GET"])
 def goToCreateGroup():
@@ -205,8 +221,10 @@ def goToCreateGroup():
 
 @app.route("/creategroup/", methods=["POST", "GET"])
 def createGroup():
-  global group_id, my_email
+  global group_id, groupid_postid, my_email, cur_group_id
   group_id += 1
+  groupid_postid[group_id] = 0
+  cur_group_id = group_id
   group_name = request.args["groupname"]
   group_des = request.args["description"]
   group_lim = int(request.args["limit"])
@@ -229,6 +247,28 @@ def createGroup():
   else:
     return render_template("group.html", user_email=my_email, 
       group_name=group_name, group_description=group_des, group_admin=my_email)
+
+@app.route("/gotogroup/", methods=["POST","GET"])
+def postInGroup():
+  post = request.args["post"]
+  post_id = groupid_postid[group_id]
+  date_time = datetime.datetime.now()
+  engine.execute("INSERT INTO board_posted VALUES(?,?,?,?,?);", post_id, cur_group_id, date_time, post, my_email)
+  print "succesfully inserted"
+  # cursor = engine.execute("SELECT * FROM board_posted WHERE group_id = ?", cur_group_id)
+  cursor = engine.execute("SELECT * FROM groups, board_posted ON groups.group_id = board_posted.group_id AND groups.group_id = ?", cur_group_id)
+  print "succesfully queried"
+  result = []
+  for item in cursor:
+    print item
+    group_name = item["group_name"]
+    group_des = item["description"]
+    result.append(item["message"])
+  cursor.close()
+  print "group information: " , group_name, group_des
+  context = dict( data = result )
+  return render_template("group.html", user_email=my_email, group_name=group_name, group_description=group_des, group_admin=my_email, **context)
+
 #
 # @app.route is a decorator around index() that means:
 #   run index() whenever the user tries to access the "/" path using a POST or GET request

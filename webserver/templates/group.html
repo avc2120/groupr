@@ -8,7 +8,19 @@
 		<p>Size Limit: {{size_limit}}</p>
 		<p>Group Description: {{group_description}}</p>
 		<p>Group Admin: {{group_admin}}</p>
-		<p>Group Members: {{group_members}}</p>
-		<p>Posts: {{posts}}</p>
+		<p>Group Members:</p>
+		<div> {%for member in members%}
+			<div>{{member}}</div>
+			{% endfor %}
+		</div>
+		<form method="GET" action="http://chalice.cloudapp.net:8111/gotogroup/">
+			<p>Posts:</p>
+			<input type="text" name="post"/><br/>
+			<input type="submit" name="Submit"/><br/>
+		</form>
+<!-- 		<div>{{data}}</div> -->
+		{%for n in data%}
+		<div>{{n}}</div>
+		{% endfor %}
 	</body>
 </html>
