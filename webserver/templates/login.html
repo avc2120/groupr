@@ -1,14 +1,42 @@
 <html>
+  <style>
+  form, .alert-danger
+  {
+    margin-left: auto;
+    margin-right: auto;
+    width: 50em;
+  }
+  label, input, select
+  {
+    margin-top: -7px;
+  }
+  .groupr-header {
+    margin-left: 20em;
+  }
+  div:empty {
+    display: none;
+  }
+  </style>
+
+
 <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-  <h1>Groupr</h1>
-  <p> Groupr is the best way to create and join Study Groups!</p>
-  <h2>Login</h2>
-  <p>{{error}}</p>
+  <div class="groupr-header">
+    <h1>Groupr</h1>
+    <p > Groupr is the best way to create and join Study Groups!</p>
+  </div class="groupr-header">
+  <div class="alert alert-danger">{{error}}</div>
+  <br>
   <form method="POST" action="http://chalice.cloudapp.net:8111/login/">
-    Email: <input type="text" name="email"/><br/>
-    Username: <input type="text" name="username"/><br/>
-    <input type="submit" value="Log In!">
+      <div class="form-group">
+        <label for="exampleInputEmail1">Email address</label>
+        <input type="email" name="email" class="form-control" id="exampleInputEmail1" placeholder="Email">
+      </div>
+      <div class="form-group">
+        <label for="exampleInputUsername1">Username</label>
+        <input name="username" type="username" class="form-control" id="exampleInputUsername1" placeholder="Username">
+      </div>
+    <input class="btn btn-default" type="submit" value="Log In!">
   </form>
 </html>

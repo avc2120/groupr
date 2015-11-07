@@ -1,59 +1,98 @@
 <html>
 <html>
-<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-  <body>
+<head>
+  <style>
+  form 
+  {
+    margin-left: auto;
+    margin-right: auto;
+    width: 50em;
+  }
+  label, input, div, select
+  {
+    margin-top: -7px;
+  }
+  .groupr-header {
+    margin-left: 20em;
+  }
+  div:empty {
+    display: none;
+  }
+  </style>
+  <!-- <link href="groupr.css" rel="stylesheet" type="text/css"> -->
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+</head>
+<body>
+  <div class="groupr-header">
     <h1>Groupr</h1>
-    <p> Groupr is the best way to create and join Study Groups!</p>
-
+    <p > Groupr is the best way to create and join Study Groups!</p>
+  </div class="groupr-header">
+  <div class="form-group">
     <form method="POST" action="http://chalice.cloudapp.net:8111/">
-      <p>{{error}}</p>
-      Email: <input type="text" name="email"/><br/>
-      Username: <input type="text" name="username"/><br/>
-      Gender: <select name="gender">
-                <option value="Female">Female</option>
-                <option value="Male">Male</option>
-              </select></br>
-      Major:  <input type="text" name="major"/><br/>
-      Year:   <select name="year">
-                <option value=1>1</option>
-                <option value=2>2</option>
-                <option value=3>3</option>
-                <option value=4>4</option>
-                <option value=5>5</option>
-              </select><br/>
-      Housing: <select name="housing">
-                  <option value="Claremont">47 Claremont</option>
-                  <option value="600West">600 West 113th Street</option>
-                  <option value="Broadway">Broadway Hall</option>
-                  <option value="Carlton">Carlton Arms</option>
-                  <option value="Carman">Carman Hall</option>
-                  <option value="EC">East Campus</option>
-                  <option value="Furnald">Furnald</option>
-                  <option value="Greek">Greek Brownstones</option>
-                  <option value="Harmony">Harmony Hall</option>
-                  <option value="Hartley">Hartley Hall</option>
-                  <option value="Hogan">Hogan Hall</option>
-                  <option value="JohnJay">John Jay Hall</option>
-                  <option value="McBain Hall">McBain Hall</option>
-                  <option value="Brownstones">Residential Brownstones</option>
-                  <option value="River">River Hall</option>
-                  <option value="Ruggles">Ruggles Hall</option>
-                  <option value="Schapiro">Schapiro Hall</option>
-                  <option value="SIC">SIC Residences</option>
-                  <option value="Wallach">Wallach Hall</option>
-                  <option value="Watt">Watt Hall</option>
-                  <option value="Wein">Wein Hall</option>
-                  <option value="Woodbridge">Woodbridge Hall</option>
-                </select><br/>
-      <input type="text" name="description"/><br/>
-      <input type="submit" value="Sign Up"/>
+      <div class="alert alert-danger">{{error}}</div>
+      <div class="form-group">
+        <label for="exampleInputEmail1">Email address</label>
+        <input type="email" name="email" class="form-control" id="exampleInputEmail1" placeholder="Email">
+      </div>
+      <div class="form-group">
+        <label for="exampleInputUsername1">Username</label>
+        <input name="username" type="username" class="form-control" id="exampleInputUsername1" placeholder="Username">
+      </div>
+      <label >Gender</label>
+      <select class="form-control" name="gender">
+        <option value="Female">Female</option>
+        <option value="Male">Male</option>
+      </select></br>
+      <div class="form-group">
+        <label for="exampleInputMajor1">Major</label>
+        <input name="major" type="major" class="form-control" id="exampleInputMajor1" placeholder="major">
+      </div>
+      <label >Year</label>
+      <select class="form-control" name="year">
+        <option value=1>1</option>
+        <option value=2>2</option>
+        <option value=3>3</option>
+        <option value=4>4</option>
+        <option value=5>5</option>
+      </select><br/>
+      <label >Housing</label>
+      <select class="form-control" name="housing">
+        <option value="Claremont">47 Claremont</option>
+        <option value="600West">600 West 113th Street</option>
+        <option value="Broadway">Broadway Hall</option>
+        <option value="Carlton">Carlton Arms</option>
+        <option value="Carman">Carman Hall</option>
+        <option value="EC">East Campus</option>
+        <option value="Furnald">Furnald</option>
+        <option value="Greek">Greek Brownstones</option>
+        <option value="Harmony">Harmony Hall</option>
+        <option value="Hartley">Hartley Hall</option>
+        <option value="Hogan">Hogan Hall</option>
+        <option value="JohnJay">John Jay Hall</option>
+        <option value="McBain Hall">McBain Hall</option>
+        <option value="Brownstones">Residential Brownstones</option>
+        <option value="River">River Hall</option>
+        <option value="Ruggles">Ruggles Hall</option>
+        <option value="Schapiro">Schapiro Hall</option>
+        <option value="SIC">SIC Residences</option>
+        <option value="Wallach">Wallach Hall</option>
+        <option value="Watt">Watt Hall</option>
+        <option value="Wein">Wein Hall</option>
+        <option value="Woodbridge">Woodbridge Hall</option>
+      </select><br/>
+      <div class="form-group">
+        <label for="exampleInputDescription1">Description</label>
+        <input name="description" type="description" class="form-control" id="exampleInputDescription1" placeholder="Description">
+      </div>
+      <input type="submit" value="Sign Up" class="btn btn-default"/>
+    </form>
 
-    </form>
-    Already Have An Account?
     <form method="GET" action="http://chalice.cloudapp.net:8111/login/">
-    <input type="submit" value="Log In"/>
+      Already Have An Account?
+      <input type="submit" value="Log In" class="btn btn-default"/>
     </form>
-  </body>
+  </div>
+</body>
 </html>
