@@ -18,7 +18,7 @@ app.secret_key = os.urandom(24)
 
 DATABASEURI = "sqlite:///groupr.db"
 engine = create_engine(DATABASEURI)
-#setup.dataSetup(engine)
+setup.dataSetup(engine)
 cursor = engine.execute("SELECT * FROM groups;")
 count = 0
 for item in cursor:
@@ -176,7 +176,7 @@ def postInGroup():
     print item
     group_name = item["group_name"]
     group_des = item["description"]
-    result.append(item["message"])
+    result.append(item)
   cursor.close()
   context = dict( data = result )
   return render_template("group.html", user_email=session["email"], group_name=group_name, group_description=group_des, group_admin=session["email"], **context)

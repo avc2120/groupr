@@ -28,8 +28,14 @@
 			<input type="text" name="post"/><br/>
 			<input type="submit" name="Submit"/><br/>
 		</form>
+		<table style="width:100%" class="table table-hover">
 		{%for n in data%}
-		<div>{{n}}</div>
-		{% endfor %}
+  		<tr>
+    		<td>{{ n["user_email"] }} </td>
+    		<td>{{ n["message"] }}</td> 
+    		<td>{{ n["date_time"] }}</td> 
+  		</tr>
+  		{% endfor %}
+ 		</table>
 	</body>
 </html>
