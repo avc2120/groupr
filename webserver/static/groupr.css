@@ -1,0 +1,31 @@
+body {
+
+  background-color: #F5F5F5;
+}
+
+.container {
+  max-width: 1020px;
+  background-color: #fff;
+  padding-top: 20px;
+  padding-bottom: 20px;    
+}
+
+.huge-header {
+	font-size: 5em;
+}
+
+textarea {
+	resize: vertical;
+}
+
+nav {
+	padding-top: 10px;
+	padding-bottom: 20px;
+}
+
+#to-dash {
+	margin-top: 5px;
+	margin-bottom: 0px;
+	padding-left: 10px;
+	text-decoration: none;
+}

@@ -1,21 +1,86 @@
-<html>
-<html>
-<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-  <body>
-    <h1>Groupr</h1>
-    <p> Groupr is the best way to create and join Study Groups!</p>
-    <button type="button">Home</button>
-    <button type="button">My Profile</button>
-    <button type="button">My Groups</button>
-    <button type="button">Sign Out</button>
-    <form method="GET" action="http://chalice.cloudapp.net:8111/creategroup/">
-      Group Name: <input type="text" name="groupname"/><br/>
-      Description: <input type="text" name="description"/><br/>
-      Size Limit: <input type="text" name="limit"/><br/>
-      Open Group: <input type="checkbox" name="status" checked/><br/>
-      <input type="submit" value="Create Group"/>
+{% extends "logged-in.html" %}
+{% block subtitle %}Create Group{% endblock %}
+
+{% block content %}
+
+  
+  <div class="well">
+    <form class="form-horizontal"  method="POST" action="{{ url_for('createGroup') }}">
+      <fieldset>
+        <legend>Create New Group</legend>
+        <div class="form-group">
+          <label class="col-lg-2 control-label">Group Name: </label>
+          <div class="col-lg-10">
+            <input type="text" class="form-control" name="groupname">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputPassword" class="col-lg-2 control-label">Size Limit:  </label>
+          <div class="col-lg-10">
+            <input type="text" class="form-control" name="limit">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" name="is-unlimited"> Check if Unlimited Number of Members!
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="textArea" class="col-lg-2 control-label">Description: </label>
+          <div class="col-lg-10">
+            <textarea class="form-control" rows="3" name="description"></textarea>
+            <span class="help-block">What is your group all about? Is it for a specific project, or a general study group? Is it a hub to share resources or ask questions? </span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-lg-2 control-label">Status: </label>
+          <div class="col-lg-10">
+            <div class="radio">
+              <label>
+                <input type="radio" name="optionsRadios" id="optionsRadios1" value="open" checked="">
+                Open (group can be searched for, users can request to join)
+              </label>
+            </div>
+            <div class="radio">
+              <label>
+                <input type="radio" name="optionsRadios" id="optionsRadios2" value="closed">
+                Closed (group cannot be searched for, joining is invite by admin only)
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="select" class="col-lg-2 control-label">Course and Section: </label>
+          <div class="col-lg-10">
+            <select class="form-control" id="course" name="course">
+              <option selected="selected" disabled>Select a course first!</option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
+            </select>
+            <!-- Will dynamically generate all appropriate sections-->
+            <select class="form-control" id="section" name="section">
+              
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-lg-10 col-lg-offset-2">
+            <input type="submit" class="btn btn-primary" value="Submit" />
+          </div>
+        </div>
+      </fieldset>
     </form>
-  </body>
-</html>
+  </div>
+
+  <script>
+    $('#course').on('change', function() {
+      console.log('hello');
+      $('#section').empty();
+      $('#section').append('<option>' + $('#course').val() + '</option>');
+    });
+      
+  </script>
+{% endblock %}

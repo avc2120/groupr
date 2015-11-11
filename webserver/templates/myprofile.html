@@ -1,0 +1,38 @@
+{% extends "logged-in.html" %}
+{% block subtitle %}Welcome!{% endblock %}
+
+{% block content %}
+	<h1> My Profile </h1>
+	<p class="lead">This is what others will see about you!</p>
+	<div class="panel panel-primary">
+	  <div class="panel-heading">
+	    <h3 class="panel-title"><span class="glyphicon glyphicon-user"></span> &nbsp;&nbsp;&nbsp; {{username}}</h3>
+	  </div>
+	  <ul class="list-group">
+	  	<li class="list-group-item"><span class="glyphicon glyphicon-envelope"></span> &nbsp;&nbsp;&nbsp; {{email}}</li>
+	  	<li class="list-group-item"><span class="glyphicon glyphicon-book"></span> &nbsp;&nbsp;&nbsp; {{major}}</li>
+	  	<li class="list-group-item"><span class="glyphicon glyphicon-heart"></span> &nbsp;&nbsp;&nbsp; {{gender}}</li>
+	  	<li class="list-group-item"><span class="glyphicon glyphicon-education"></span> &nbsp;&nbsp;&nbsp; 
+	  		{% if year == 1 %}
+	  			Freshman
+	  		{% elif year == 2 %}
+	  			Sophomore
+	  		{% elif year == 3 %}
+	  			Junior
+	  		{% elif year == 4 %}
+	  			Senior
+	  		{% else %}
+	  			Grad Student
+	  		{% endif %}
+
+	  	</li>
+	  	<li class="list-group-item"><span class="glyphicon glyphicon-home"></span> &nbsp;&nbsp;&nbsp; {{housing}}</li>
+	  </ul>
+	  <div class="panel-body">
+	    {{description}}
+	    <br><br>
+	  </div>
+	</div>
+
+
+{% endblock %}

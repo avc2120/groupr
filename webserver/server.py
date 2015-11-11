@@ -75,7 +75,8 @@ def index():
       return render_template("index.html", error="Please fill out all required fields" )
     engine.execute("INSERT INTO users VALUES(?,?,?,?,?,?,?);", email, username, major, gender, year, description, housing)
     print "Sucessfully Created New Account"
-    return render_template("home.html", user_email=email, data=[])
+    return redirect(url_for('home'))
+    # return render_template("home.html", user_email=email, data=[])
   else:
     return render_template("index.html")
 
@@ -96,26 +97,27 @@ def login():
       session["gender"] = result["gender"]
       session["year"] = int(result["year"])
       session["housing"] = result["housing"]
+      session['description'] = result['description']
       print session
-      return render_template("home.html", user_email=email)
+      return redirect(url_for('home'))
     else:
       return render_template("login.html", error="Invalid Email and/or Username")
   else:
     return render_template("login.html", error="")
 
-@app.route("/navigate/")
-def navigate():
-  print request.args.keys()
-  if "signout" in request.args.keys():
-    session.pop("username", None)
-    session.pop("email", None)
-    return redirect(url_for("index"))
-  elif "groups" in request.args.keys():
-    return render_template("group.html")
-  elif "home" in request.args.keys():
-    return render_template("home.html", user_email = session["email"])
-  else:
-    return redirect(url_for("profile"))
+@app.route('/dashboard/')
+def home():
+  return render_template('home.html', user_email = session['email'])
+
+@app.route('/profile/')
+def my_profile():
+  return render_template('myprofile.html', email = session['email'], username = session['username'], major = session['major'], gender = session['gender'], year = session['year'], housing = session['housing'], description=session['description'])
+
+@app.route('/signout/')
+def signout():
+  session.pop('username', None)
+  session.pop('email', None)
+  return redirect(url_for('index'))
 
 @app.route("/search/", methods=["POST", "GET"])
 def search():
@@ -129,13 +131,12 @@ def search():
   cursor.close()
   context = dict(data = results)
   return render_template("home.html", **context)
-
-@app.route("/gotocreategroup/", methods=["POST", "GET"])
-def goToCreateGroup():
-  return render_template("creategroup.html")
-
+  
 @app.route("/creategroup/", methods=["POST", "GET"])
 def createGroup():
+  if request.method == 'GET':
+    return render_template("creategroup.html")
+
   global group_id, groupid_postid, cur_group_id
   group_id += 1
   groupid_postid[group_id] = 0

@@ -1,8 +1,7 @@
-<html>
-<html>
-<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+{% extends "logged-in.html" %}
+{% block subtitle %}Group{% endblock %}
+
+{% block content %}
 	<h1>Groupr</h1>
   	<p> Groupr is the best way to create and join Study Groups!</p>
   	<form method= "GET" action="http://chalice.cloudapp.net:8111/navigate">
@@ -37,5 +36,4 @@
   		</tr>
   		{% endfor %}
  		</table>
-	</body>
-</html>
+{% endblock %}
