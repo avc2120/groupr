@@ -15,9 +15,9 @@
 			      My Groups<span class="caret"></span>
 			    </a>
 			    <ul class="dropdown-menu">
-			      <li><a href="#">Action</a></li>
-			      <li><a href="#">Another action</a></li>
-			      <li><a href="#">Something else here</a></li>
+			      {% for group in groups %}
+			      	<li><a href="{{ url_for('group',group_id=group.group_id)}}">{{group.group_name}}</a></li>
+			      {% endfor %}
 			      <li class="divider"></li>
 			      <li><a href="{{ url_for('createGroup') }}"><span class="glyphicon glyphicon-plus-sign"></span> Create New Group </a></li>
 			    </ul>
