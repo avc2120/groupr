@@ -2,9 +2,8 @@
 {% block subtitle %}Welcome!{% endblock %}
 
 {% block content %}
-	<h1>Groupr</h1>
-	<p> Groupr is the best way to create and join Study Groups!</p>
-	<p> Signed in as {{user_email}}</p>
+	<h1>Dashboard</h1>
+	<p class="lead"> Signed in as {{user_email}}</p>
 	<form method="GET" action="http://chalice.cloudapp.net:8111/search/">
 		<input type="text" name="query"/><br/>
 		<div class="onoffswitch">

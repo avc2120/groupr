@@ -1,5 +1,5 @@
 {% extends "logged-in.html" %}
-{% block subtitle %}Welcome!{% endblock %}
+{% block subtitle %}My Profile{% endblock %}
 
 {% block content %}
 	<h1> My Profile </h1>
@@ -11,7 +11,13 @@
 	  <ul class="list-group">
 	  	<li class="list-group-item"><span class="glyphicon glyphicon-envelope"></span> &nbsp;&nbsp;&nbsp; {{email}}</li>
 	  	<li class="list-group-item"><span class="glyphicon glyphicon-book"></span> &nbsp;&nbsp;&nbsp; {{major}}</li>
-	  	<li class="list-group-item"><span class="glyphicon glyphicon-heart"></span> &nbsp;&nbsp;&nbsp; {{gender}}</li>
+	  	<li class="list-group-item"><span class="glyphicon glyphicon-heart"></span> &nbsp;&nbsp;&nbsp; 
+	  	{% if gender == 'F' %}
+	  		Female
+	  	{% else %}
+	  		Male
+	  	{% endif %}
+	  	</li>
 	  	<li class="list-group-item"><span class="glyphicon glyphicon-education"></span> &nbsp;&nbsp;&nbsp; 
 	  		{% if year == 1 %}
 	  			Freshman

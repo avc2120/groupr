@@ -10,7 +10,8 @@ import os
 import datetime
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, session, url_for, escape
+from flask import Flask, request, render_template, g, redirect, Response, session, url_for, escape, flash
+from random import randint
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -30,6 +31,9 @@ engine = create_engine(DATABASEURI)
 # cur_group_id = 0
 
 cur_group_data = []
+
+def rand_id():
+  return randint(10000000,99999999)
 
 @app.before_request
 def before_request():
@@ -60,10 +64,6 @@ def teardown_request(exception):
 
 @app.route('/', methods=["POST", "GET"])
 def index():
-  if g:
-    print(g)
-    print('g is printed above')
-
   if request.method == "POST":
     email = request.form["email"]
     query = "SELECT * FROM users WHERE user_email=%s;"
@@ -98,9 +98,7 @@ def login():
     query = """SELECT * FROM users WHERE user_email=%s AND name=%s;"""
     cursor = g.conn.execute(query, (email, username))
     results = cursor.fetchall()
-    print len(results)
     if len(results) == 1:  
-      print results
       result = results[0]
       session["email"] = email
       session["username"] = username
@@ -110,30 +108,28 @@ def login():
       session["housing"] = result["housing"]
       session['description'] = result['description']
       
-      cursor = g.conn.execute("""SELECT group_id FROM belongs_to WHERE user_email=%s""",(email,))
+      q= """SELECT group_id FROM belongs_to WHERE user_email=%s"""
+      cursor = g.conn.execute(q,(email,))
       results = cursor.fetchall()
       for item in results:
-        print(item)
-        cursor2 = g.conn.execute("""SELECT * FROM groups WHERE group_id=%s""",(str(item[0]),))
+        q2 = """SELECT * FROM groups WHERE group_id=%s"""
+        cursor2 = g.conn.execute(q2,(str(item[0]),))
         results2 = cursor2.fetchall()
         for item2 in results2:
-          print(item2)
-          g = {}
+          g_dict = {}
           result2 = results2[0]
-          g['group_id'] = result2['group_id']
-          print(result2['group_id'])
-          print(result2['user_email'])
-          print(result2['description'])
-          print(result2['size_limit'])
-          print(result2['is_limited'])
-          g['group_name'] = result2['group_name']
-          g['user_email'] = result2['user_email']
-          g['description'] = result2['description']
-          g['size_limit'] = result2['size_limit']
-          g['is_limited'] = result2['is_limited']
-          g['status'] = result2['status']
-          cur_group_data.append(g)
+          g_dict['group_id'] = result2['group_id']
+          g_dict['group_name'] = result2['group_name']
+          g_dict['user_email'] = result2['user_email']
+          g_dict['description'] = result2['description']
+          g_dict['size_limit'] = result2['size_limit']
+          g_dict['is_limited'] = result2['is_limited']
+          g_dict['status'] = result2['status']
+          cur_group_data.append(g_dict)
 
+      #copy paste this to get rid of duplicates in cur_group_data
+      {v['group_id']:v for v in cur_group_data}.values() 
+      
       return redirect(url_for('home'))
     else:
       return render_template("login.html", error="Invalid Email and/or Username")
@@ -142,24 +138,45 @@ def login():
 
 @app.route('/dashboard/')
 def home():
-  print g
-  print('g is printed above')
   if session.get('email') == None:
     return redirect(url_for('index'))  
   return render_template('home.html', user_email = session['email'], groups=cur_group_data)
 
 @app.route('/profile/')
 def my_profile():
-  print g
-  print('g is printed above profile')
   if session.get('email') == None:
     return redirect(url_for('index'))  
   return render_template('myprofile.html', email = session['email'], username = session['username'], major = session['major'], gender = session['gender'], year = session['year'], housing = session['housing'], description=session['description'], groups=cur_group_data)
 
+@app.route('/profile/<user_email>')
+def profile(user_email):
+  if session.get('email') == None:
+    return redirect(url_for('index'))
+
+  query = """SELECT * from users WHERE user_email=%s"""
+  cursor = g.conn.execute(query, (user_email,))
+  user_data = {}
+  for item in cursor.fetchall():
+    user_data['user_email'] = user_email
+    user_data['name'] = item['name']
+    user_data['major'] = item['major']
+    user_data['gender'] = item['gender']
+    user_data['year'] = item['year']
+    user_data['description'] = item['description']
+    user_data['housing'] = item['housing']
+
+  return render_template('profile.html', user=user_data, groups=cur_group_data)
+
+@app.route('/browse_profiles')
+def browse_profiles():
+  return render_template('browse-profiles.html', groups=cur_group_data)
+
 @app.route('/signout/')
 def signout():
+  global cur_group_data, g
   session.pop('username', None)
   session.pop('email', None)
+  cur_group_data = []
   return redirect(url_for('index'))
 
 @app.route("/search/", methods=["POST", "GET"])
@@ -181,7 +198,7 @@ def createGroup():
     return redirect(url_for('index'))
 
   if request.method == 'GET':
-    return render_template("creategroup.html")
+    return render_template("creategroup.html", groups=cur_group_data)
 
   global group_id, groupid_postid, cur_group_id
   group_id += 1
@@ -217,7 +234,7 @@ def postInGroup():
   groupid_postid[cur_group_id] += 1
   post_id = groupid_postid[cur_group_id]
   date_time = datetime.datetime.now()
-  query = "INSERT INTO board_posted VALUES(%d,%d,%r,%s,%s);"
+  query = "INSERT INTO board_posted VALUES(%s,%s,%s,%s,%s);"
   engine.execute(query, (int(post_id), int(cur_group_id), date_time, post, session["email"]))
   cursor = engine.execute("SELECT * FROM groups, board_posted ON groups.group_id = board_posted.group_id AND groups.group_id = %d", cur_group_id)
   result = []
@@ -230,7 +247,7 @@ def postInGroup():
   context = dict( data = result )
   return render_template("group.html", user_email=session["email"], group_name=group_name, group_description=group_des, group_admin=session["email"], **context)
 
-@app.route('/manage_group/<int:group_id>')
+@app.route('/manage_group/<int:group_id>/')
 def manage_group(group_id):
   if session.get('email') == None:
     return redirect(url_for('index'))
@@ -242,19 +259,88 @@ def group(group_id):
   if session.get('email') == None:
     return redirect(url_for('index'))
 
+  #handles wall posts
+  if request.method == 'POST':
+    message = request.form['the-post']
+    post_id = str(rand_id())
+    user_email = session['email']
+    group_id_str = str(group_id)
+    date_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print message
+    print post_id
+    print user_email
+    print date_time
+    query = "INSERT INTO board_posted VALUES(%s,%s,%s,%s,%s);"
+    result = g.conn.execute(query, (post_id, group_id_str, date_time, message, user_email))
+    flash('Successfully made post!')
+    return redirect(url_for('group', group_id=group_id))
+    
+
+  # save on db queries by picking out correct data from data of all groups user belongs to
   for ind, group in enumerate(cur_group_data):
     if group['group_id'] == group_id:
       g_dict = cur_group_data[ind]
       break
     if ind == len(cur_group_data)-1 and group_id != group['group_id']: 
-      print('You are looking for a group with an id that doesnt exist.')
+      print('You do not have permission to access this group or this group doesnt exist')
       return redirect(url_for('index'))
 
   is_admin = False
   if g_dict['user_email'] == session['email']:
     is_admin = True
 
-  return render_template('group.html', group=g_dict, groups=cur_group_data)
+  #get admin username
+  cursor = g.conn.execute("""SELECT name FROM users WHERE user_email=%s;""", (g_dict['user_email'],))
+  for item in cursor.fetchall():
+    admin = item['name']
+
+  #get course data
+  classdata={}
+  query = """SELECT call_number FROM containing WHERE group_id=%s;"""
+  cursor = g.conn.execute(query, (group_id,))
+  result1 = cursor.fetchall()
+  for item in result1:
+    classdata['call_number'] = item['call_number']
+    q2 = """SELECT professor, course_id FROM has_sections WHERE call_number=%s;"""
+    cursor2 = g.conn.execute(q2, (item['call_number'],))
+    for item2 in cursor2.fetchall():
+      classdata['prof'] = item2['professor']
+      q3 = """SELECT course_title, term, department FROM courses WHERE course_id=%s;"""
+      cursor3 = g.conn.execute(q3, (item2['course_id']))
+      for item3 in cursor3.fetchall():
+        classdata['course_title'] = item3['course_title']
+        classdata['term'] = item3['term'] 
+        classdata['department'] = item3['department']  
+
+  #get list of members
+  members = []
+  query = """SELECT user_email, name FROM users WHERE user_email IN (SELECT user_email FROM belongs_to WHERE group_id=%s);"""
+  cursor = g.conn.execute(query, (group_id,))
+  results = cursor.fetchall()
+  for item in results:
+    u_d = {}
+    u_d['user_email'] = item['user_email']
+    u_d['name'] = item['name']
+    members.append(u_d)
+
+  #get board posts
+  posts = []
+  query = """SELECT * FROM board_posted WHERE group_id=%s ORDER BY date_time desc;"""
+  cursor = g.conn.execute(query, (group_id,))
+  results = cursor.fetchall()
+  for item in results:
+    p = {}
+    p['date_time'] = item['date_time']
+    p['message'] = item['message']
+    p['poster'] = get_username(item['user_email']) 
+    posts.append(p)
+
+  return render_template('group.html', username=session['username'],posts=posts, admin=admin, members=members, group=g_dict, is_admin=is_admin, groups=cur_group_data, classdata=classdata)
+
+def get_username(user_email):
+  cursor = g.conn.execute("""SELECT name FROM users WHERE user_email=%s""", (user_email,))
+  for item in cursor.fetchall():
+    return item['name']
 
 @app.route('/course/<int:course_id>', methods=['GET','POST'])
 def course(course_id):

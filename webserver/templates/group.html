@@ -1,39 +1,87 @@
 {% extends "logged-in.html" %}
-{% block subtitle %}Group{% endblock %}
+{% block subtitle %}{{group.group_name}}{% endblock %}
 
 {% block content %}
-	<h1>Groupr</h1>
-  	<p> Groupr is the best way to create and join Study Groups!</p>
-  	<form method= "GET" action="http://chalice.cloudapp.net:8111/navigate">
-  		<input type="submit" name="home" value="Home"/>
-  		<input type="submit" name="profile" value="Profile"/>
-  		<input type="submit" name="groups" value="Groups"/>
-  		<input type="submit" name="signout" value="Sign Out"/>
-  	</form>
-	<body>
-		<p> Signed in as {{user_email}}</p>
-		<h1>{{group_name}}</h1>
-		<p>Course Title: {{course_title}}</p>
-		<p>Size Limit: {{size_limit}}</p>
-		<p>Group Description: {{group_description}}</p>
-		<p>Group Admin: {{group_admin}}</p>
-		<p>Group Members:</p>
-		<div> {%for member in members%}
-			<div>{{member}}</div>
-			{% endfor %}
-		</div>
-		<form method="GET" action="http://chalice.cloudapp.net:8111/gotogroup/">
-			<p>Posts:</p>
-			<input type="text" name="post"/><br/>
-			<input type="submit" name="Submit"/><br/>
-		</form>
-		<table style="width:100%" class="table table-hover">
-		{%for n in data%}
-  		<tr>
-    		<td>{{ n["user_email"] }} </td>
-    		<td>{{ n["message"] }}</td> 
-    		<td>{{ n["date_time"] }}</td> 
-  		</tr>
-  		{% endfor %}
- 		</table>
+	{% if is_admin == True %}
+		<br>
+		<a class="btn btn-danger" href="{{url_for('manage_group',group_id=group.group_id)}}">Manage Group as Admin</a>
+	{% endif %}
+
+	{% with messages = get_flashed_messages() %}
+  	{% if messages %}
+    	{% for message in messages %}
+				<div class="alert alert-dismissible alert-success">
+				  <button type="button" class="close" data-dismiss="alert">X</button>
+				  {{ message }}
+				</div>
+    	{% endfor %}
+  	{% endif %}
+	{% endwith %}
+
+	<h1>{{group.group_name}}</h1>
+	<p class="lead">{{ group.description }}</p>
+	<hr>
+	<table class="table table-striped table-hover">
+		<tbody>
+			<tr>
+				<td>Course</td>
+				<td> {{classdata.call_number}}: {{classdata.department}} {{classdata.term}} {{classdata.course_title}}, {{classdata.prof}}'s section</td>
+			</tr>
+
+			<tr>
+				<td>Size Limit (Member Cap)</td>
+				<td>
+					{% if group.is_limited == True %}
+						{{group.size_limit}}
+					{% else %}
+						Unlimited
+					{% endif %}
+				</td>
+			</tr>
+
+			<tr>
+				<td>Admin: </td>
+				<td>{{admin}}</td>
+			</tr>
+		</tbody>
+	</table>						
+
+	<p class="lead">Group Members:</p>
+	{%for member in members%}
+		<a class="btn btn-default" href="{{url_for('profile', user_email=member.user_email)}}">{{ member.name }}</a> &nbsp;&nbsp;
+	{% endfor %}
+	<hr>
+
+	<p class="lead">Board Posts:</p>
+
+	<form id="posting" method="POST" action="{{url_for('group',group_id=group.group_id)}}">
+			<div class="form-group">
+				<label class="control-label">Post as {{username}}: </label>
+				<textarea name="the-post" id="postarea" class="form-control"></textarea>
+			</div>
+			<div class="form-group">
+				<input type="submit" name="Submit" class="btn btn-primary" value="Submit"/>
+			</div>
+	</form>
+	<hr>
+
+	{% if posts|length == 0 %}
+		<h2><em>No posts so far!</em></h2>
+	{% else %}
+		{% for post in posts%}
+			<div class="well">
+				<h4>{{post.poster}} says at {{post.date_time}}</h4>
+				{{post.message}}
+			</div>
+		{% endfor %}
+	{% endif %}
+
+	<script>
+		$('#posting').submit( function(event) {
+			if ($.trim($('#postarea').val()) === '') {
+				alert('Cann\'t submit an empty post!');
+				event.preventDefault();
+			}
+		});
+	</script>
 {% endblock %}
