@@ -342,6 +342,20 @@ def get_username(user_email):
   for item in cursor.fetchall():
     return item['name']
 
+@app.route('/browse_courses')
+def browse_courses():
+  cursor = g.conn.execute("SELECT * FROM courses")
+  course_list = []
+  for item in cursor.fetchall():
+    c = {}
+    c['course_title'] = item['course_title']
+    c['course_id'] = item['course_id']
+    c['term'] = item['term']
+    c['department'] = item['department']
+    course_list.append(c)
+
+  return render_template('browse-groups.html', courses=course_list)
+
 @app.route('/course/<int:course_id>', methods=['GET','POST'])
 def course(course_id):
   if session.get('email') == None:
