@@ -167,9 +167,23 @@ def profile(user_email):
 
   return render_template('profile.html', user=user_data, groups=cur_group_data)
 
-@app.route('/browse_profiles')
+@app.route("/browse_profiles/", methods=["POST", "GET"])
 def browse_profiles():
-  return render_template('browse-profiles.html', groups=cur_group_data)
+  if request.method == "GET":
+    cursor = g.conn.execute("SELECT * FROM users;")
+    user_list = []
+    for item in cursor.fetchall():
+      c = {}
+      c['user_email'] = item['user_email']
+      c['name'] = item['name']
+      c['major'] = item['major']
+      c['gender'] = item['gender']
+      c['year'] = item['year']
+      c['description'] = item['description']
+      c['housing'] = item['housing']
+      user_list.append(c)
+      print c
+    return render_template('browse-profiles.html', users=user_list, groups=cur_group_data)
 
 @app.route('/signout/')
 def signout():
