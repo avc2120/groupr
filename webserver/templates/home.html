@@ -2,31 +2,34 @@
 {% block subtitle %}Welcome!{% endblock %}
 
 {% block content %}
-<h1>Dashboard</h1>
-<p class="lead"> Signed in as {{user_email}}</p>
-<form method="GET" action="http://chalice.cloudapp.net:8111/search/">
-	<input type="text" name="query"/><br/>
-	<div class="onoffswitch">
-		Open Groups:
-		<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="myonoffswitch" checked>
-		<label class="onoffswitch-label" for="myonoffswitch">
-			<span class="onoffswitch-inner"></span>
-			<span class="onoffswitch-switch"></span>
-		</label>
-	</div>
-	<input type="submit" value="Search"/></br>
-</form>
-{% if data == [] %}
-<h3><em>No Results Found</em></h3>
-{% else %}
-<div class="list-group">
+	<h1>Dashboard</h1>
+	<p class="lead"> Hello {{name}}! You're signed in with {{user_email}}</p>
+	<hr>
+	<p class="lead">Your Pending Requests:</p>
+	<!-- look from requests from all groups to this user -->
+	<hr>
+	<form method="GET" action="{{url_for('search')}}">
+		<div class="form-group">
+			<label class="control-label">Search Open Groups</label>
+			<div class="input-group">
+				<input type="text" class="form-control" name="query"/>
+				<span class="input-group-btn">
+					<button class="btn btn-primary">Search</button>
+				</span>
+			</div>
+		</div>
+	</form>
 
-	{% for item in data %}
-	<a href="{{url_for('group', group_id=item.group_id)}}" class="list-group-item">
-		<h4 class="list-group-item-heading">{{ item["group_name"] }}</h4>
-		<p class="list-group-item-text">Admin: {{ item["user_email"] }} <br> Description: {{ item["description"] }} Status: {{ item["status"] }}</p>
-	</a>
-	{% endfor %}
-</div>
-{% endif %}
+	{% if data == [] %}
+		<h3><em>No Results Found</em></h3>
+	{% else %}
+		<div class="list-group">
+			{% for item in data %}
+			<a href="{{url_for('group', group_id=item.group_id)}}" class="list-group-item">
+				<h4 class="list-group-item-heading">{{ item["group_name"] }}</h4>
+				<p class="list-group-item-text">Admin: {{ item["user_email"] }} <br> Description: {{ item["description"] }} Status: {{ item["status"] }}</p>
+			</a>
+			{% endfor %}
+		</div>
+	{% endif %}
 {% endblock %}

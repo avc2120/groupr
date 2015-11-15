@@ -140,7 +140,7 @@ def login():
 def home():
   if session.get('email') == None:
     return redirect(url_for('index'))  
-  return render_template('home.html', user_email = session['email'], groups=cur_group_data)
+  return render_template('home.html', user_email = session['email'], name=session['username'], groups=cur_group_data)
 
 @app.route('/profile/')
 def my_profile():
@@ -150,6 +150,8 @@ def my_profile():
 
 @app.route('/profile/<user_email>')
 def profile(user_email):
+  global g, cur_group_data
+
   if session.get('email') == None:
     return redirect(url_for('index'))
 
@@ -165,12 +167,26 @@ def profile(user_email):
     user_data['description'] = item['description']
     user_data['housing'] = item['housing']
 
-  return render_template('profile.html', user=user_data, groups=cur_group_data)
+  is_me = False
+  if user_data['user_email'] == session['email']:
+    is_me = True
 
-@app.route("/browse_profiles/", methods=["POST", "GET"])
+  is_admin = False
+  admin_list = []
+  for group in cur_group_data:
+    if group['user_email'] == session['email']:
+      is_admin=True
+      admin_list.append(group)
+
+  return render_template('profile.html', is_me=is_me, user=user_data, groups=cur_group_data, is_admin=is_admin, admin_list=admin_list)
+
+@app.route("/browse_profiles/", methods=["GET"])
 def browse_profiles():
+  if session.get('email') == None:
+    return redirect(url_for('index'))
+
   if request.method == "GET":
-    cursor = g.conn.execute("SELECT * FROM users;")
+    cursor = g.conn.execute("SELECT * FROM users ORDER BY name ASC, user_email ASC;")
     user_list = []
     for item in cursor.fetchall():
       c = {}
@@ -182,7 +198,7 @@ def browse_profiles():
       c['description'] = item['description']
       c['housing'] = item['housing']
       user_list.append(c)
-      print c
+
     return render_template('browse-profiles.html', users=user_list, groups=cur_group_data)
 
 @app.route('/signout/')
@@ -195,6 +211,9 @@ def signout():
 
 @app.route("/search/", methods=["POST", "GET"])
 def search():
+  if session.get('email') == None:
+    return redirect(url_for('index'))
+
   query = request.args["query"]
   print query
   cursor = g.conn.execute("SELECT * FROM groups;")
@@ -204,7 +223,7 @@ def search():
       results.append(item)
   cursor.close()
   context = dict(data = results)
-  return render_template("home.html", **context)
+  return render_template("home.html", user_email=session['email'], name=session['username'], **context)
   
 @app.route("/creategroup/", methods=["POST", "GET"])
 def createGroup():
@@ -241,25 +260,6 @@ def createGroup():
   else:
     return render_template("group.html", user_email=session["email"], 
       group_name=group_name, group_description=group_des, group_admin=session["email"])
-
-@app.route("/gotogroup/", methods=["POST","GET"])
-def postInGroup():
-  post = request.args["post"]
-  groupid_postid[cur_group_id] += 1
-  post_id = groupid_postid[cur_group_id]
-  date_time = datetime.datetime.now()
-  query = "INSERT INTO board_posted VALUES(%s,%s,%s,%s,%s);"
-  engine.execute(query, (int(post_id), int(cur_group_id), date_time, post, session["email"]))
-  cursor = engine.execute("SELECT * FROM groups, board_posted ON groups.group_id = board_posted.group_id AND groups.group_id = %d", cur_group_id)
-  result = []
-  for item in cursor:
-    print item
-    group_name = item["group_name"]
-    group_des = item["description"]
-    result.append(item)
-  cursor.close()
-  context = dict( data = result )
-  return render_template("group.html", user_email=session["email"], group_name=group_name, group_description=group_des, group_admin=session["email"], **context)
 
 @app.route('/manage_group/<int:group_id>/')
 def manage_group(group_id):
@@ -358,7 +358,10 @@ def get_username(user_email):
 
 @app.route('/browse_groups')
 def browse_groups():
-  cursor = g.conn.execute("SELECT * FROM courses")
+  if session.get('email') == None:
+    return redirect(url_for('index'))
+
+  cursor = g.conn.execute("SELECT * FROM courses ORDER BY course_title ASC;")
   course_list = []
   for item in cursor.fetchall():
     c = {}
@@ -398,21 +401,23 @@ def course(course_id):
 def section(course_id,call_number):
   if session.get('email') == None:
     return redirect(url_for('index'))  
+
   #don't see your section? add it
   if request.method == 'POST':
     return redirect(url_for('section', course_id=course_id, call_number=call_number))
+
   cursor = g.conn.execute("SELECT * FROM courses WHERE courses.course_id = %s", (str(course_id),))
   result = cursor.fetchone()
   course_title = result['course_title']
 
 
-  query = "SELECT * FROM containing INNER JOIN groups ON containing.group_id = groups.group_id WHERE containing.call_number=%s AND groups.status=%s;"
+  query = "SELECT groups.group_id, groups.group_name, groups.user_email, groups.description, groups.is_limited, groups.size_limit FROM containing INNER JOIN groups ON containing.group_id = groups.group_id WHERE containing.call_number=%s AND groups.status=%s;"
   cursor = g.conn.execute(query, (str(call_number), 'open') )
   group_list = []
   for item in cursor.fetchall():
-    g_dict={}
     cursor = g.conn.execute("SELECT * FROM belongs_to WHERE belongs_to.group_id = %s", (str(item['group_id']),))
-    if (len(cursor.fetchall())< item['size_limit']):
+    if (len(cursor.fetchall())< item['size_limit']) or (item['is_limited'] == False):
+      g_dict = {}
       g_dict['group_id'] = item['group_id']
       g_dict['group_name'] = item['group_name']
       g_dict['user_email'] = item['user_email']
@@ -420,7 +425,13 @@ def section(course_id,call_number):
       group_list.append(g_dict)
       print g_dict
   return render_template('section.html', groups=group_list, course_id=course_id, call_number=call_number, course_title=course_title)
-  
+
+
+@app.route('/group_to_user_request', methods=['POST'])
+def group_to_user_request(user_email):
+  print('hello')
+  #this needs to be writted with a redirect
+
 
 if __name__ == "__main__":
   import click

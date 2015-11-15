@@ -1,19 +1,19 @@
 {% extends "logged-in.html" %}
 {% block subtitle %}Browse Profiles!{% endblock %}
 {% block content %}
-<h2>Browse Profiles</h2>
-{% if data == [] %}
-<h3><em>No Results Found</em></h3>
-{% else %}
-<div class="list-group">
-
-	{% for item in users %}
-	<a href="{{url_for('profile', name=item.name, user_email=item.user_email, major=item.major, year=item.year, housing=item.housing, gender=item.gender, description=item.description)}}" class="list-group-item">
-		<h4 class="list-group-item-heading">{{ item.name }}</h4>
-		<p class="list-group-item-text">Email: {{ item.user_email }} <br> Description: {{ item.description }} Major: {{ item.major }}</p>
-	</a>
-	{% endfor %}
-</div>
-{% endif %}
+	<h2>Browse Profiles</h2>
+	<h4>All user profiles are listed in alphabetical order by name, then email. Click to view profile page.</h4> <br>
+	{% if data == [] %}
+		<h3><em>No Results Found</em></h3>
+	{% else %}
+		<div class="list-group">
+			{% for item in users %}
+			<a href="{{url_for('profile',user_email=item.user_email)}}" class="list-group-item">
+				<h4 class="list-group-item-heading">{{ item.name }}</h4>
+				<p class="list-group-item-text">Email: {{ item.user_email }} <br> Description: {{ item.description }} <br> Major: {{ item.major }} </p>
+			</a>
+			{% endfor %}
+		</div>
+	{% endif %}
 
 {% endblock %}

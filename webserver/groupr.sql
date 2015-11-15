@@ -45,6 +45,7 @@ create table requests_join(
   user_email text,
   group_id int,
   message text,
+  direction text,
   PRIMARY KEY (user_email, group_id),
   FOREIGN KEY(user_email) REFERENCES users,
   FOREIGN KEY(group_id) REFERENCES groups

@@ -29,3 +29,12 @@ nav {
 	padding-left: 10px;
 	text-decoration: none;
 }
+
+#container2 {
+	margin-left: 30px;
+	margin-right: 30px;
+}
+
+.input-group {
+	max-width: 400px;
+}

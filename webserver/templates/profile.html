@@ -40,5 +40,54 @@
 	  </div>
 	</div>
 
+	{% if is_admin == True and is_me == False %}
+		<button type="button" class="btn btn-danger" data-toggle="modal" data-target="#inviteModal">
+			<span class="glyphicon glyphicon-star-empty"></span> &nbsp; Invite to Group!
+		</button>
+	{% endif %}
+
+{% endblock %}
+
+{% block modals %}
+	<div class="modal fade" id="inviteModal" tabindex="-1" role="dialog">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>
+	        <h4 class="modal-title">Invite to Group</h4>
+	      </div>
+	      <div class="modal-body">
+	        <form id="group-req-user" method="POST" action="url_for('group_to_user_request', user_email={{user.user_email}})">
+				   	<div class="form-group">
+				   		<label class="control-label">Invite to which group?</label>
+			        <select class="form-control" id="whichgroup" name="whichgroup">
+			          {% for group in admin_list %}
+			          	<option value="{{group.group_id}}">ID {{group.group_id}}: {{group.group_name}}</option>
+			          {% endfor %}
+			        </select>
+				    </div>
+				    <div class="form-group">
+				    	<label class="control-label">Message</label>
+				    	<textarea name="message" id="message" class="form-control"></textarea>
+				    </div>
+			    </form>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-primary" id="send">Send Request</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<script>
+		$('#send').click(function() {
+			if ($.trim($('#message').val()) === '') {
+				alert('Include a message!');
+			}
+			else {
+				$('#group-req-user').submit();
+			}
+		});
+	</script>
 
 {% endblock %}
