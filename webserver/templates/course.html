@@ -2,5 +2,14 @@
 {% block subtitle %}Course{% endblock %}
 
 {% block content %}
-A course
+<h2>Sections: {{course_name}}</h2>
+<br>
+<div class="list-group">
+	{% for item in sections %}
+	<a href="{{url_for('section', call_number=item.call_number, course_id=item.course_id)}}" class="list-group-item">
+		<h4 class="list-group-item-heading">Call Number: {{item.call_number}}</h4>
+		<p class="list-group-item-text">Professor: {{item.professor}}</p>
+	</a>
+	{% endfor %}
+</div>
 {% endblock %}

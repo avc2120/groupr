@@ -8,7 +8,7 @@
 			<h1 class="pull-left" id="to-dash"><a href="{{url_for('home')}}">Groupr</a></h1>
 			<ul class="nav nav-pills pull-right">
 			  <li {% if request.endpoint == 'my_profile'%}class="active"{% endif %}><a href="{{url_for('my_profile')}}">My Profile</a></li>
-			  <li><a href="#">Browse Groups</a></li>
+			  <li {% if request.endpoint == 'browse_groups'%}class="active"{% endif %}><a href="{{url_for('browse_groups')}}">Browse Groups</a></li>
 			  <li {% if request.endpoint == 'profile' or request.endpoint == 'browse_profiles' %}class="active"{% endif %}><a href="{{url_for('browse_profiles')}}">Browse Profiles</a></li>
 			  <li class="dropdown {% if request.endpoint == 'group' or request.endpoint == 'createGroup' %}active{% endif %}">
 			    <a class="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="false">

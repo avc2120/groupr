@@ -342,8 +342,8 @@ def get_username(user_email):
   for item in cursor.fetchall():
     return item['name']
 
-@app.route('/browse_courses')
-def browse_courses():
+@app.route('/browse_groups')
+def browse_groups():
   cursor = g.conn.execute("SELECT * FROM courses")
   course_list = []
   for item in cursor.fetchall():
@@ -353,8 +353,8 @@ def browse_courses():
     c['term'] = item['term']
     c['department'] = item['department']
     course_list.append(c)
-
-  return render_template('browse-groups.html', courses=course_list)
+    print c
+  return render_template('browse-groups.html', courses=course_list, groups=cur_group_data)
 
 @app.route('/course/<int:course_id>', methods=['GET','POST'])
 def course(course_id):
@@ -366,8 +366,19 @@ def course(course_id):
     print('hello')
     return redirect(url_for('course', course_id=course_id))
 
-  print('hello')
-  return render_template('course.html', groups=cur_group_data)
+  query = "SELECT * FROM has_sections INNER JOIN courses ON has_sections.course_id = courses.course_id WHERE courses.course_id = %s;"
+  cursor = g.conn.execute(query, (str(course_id),))
+  section_list = []
+
+  for item in cursor.fetchall():
+    c = {}
+    course_name = c['course_title'] = item['course_title']
+    c['course_id'] = course_id
+    c['call_number'] = item['call_number']
+    c['professor'] = item['professor']
+    section_list.append(c)
+    print c
+  return render_template('course.html', groups=cur_group_data, sections=section_list, course_name=course_name)
 
 @app.route('/course/<int:course_id>/<int:call_number>', methods=['GET','POST'])
 def section(course_id,call_number):
@@ -375,11 +386,24 @@ def section(course_id,call_number):
     return redirect(url_for('index'))  
   #don't see your section? add it
   if request.method == 'POST':
-    print('hello')
-    return redirect(url_for('section',course_id=course_id,call_number=call_number))
+    return redirect(url_for('section', course_id=course_id, call_number=call_number))
+  cursor = g.conn.execute("SELECT * FROM courses WHERE courses.course_id = %s", (str(course_id),))
+  result = cursor.fetchone()
+  course_title = result['course_title']
+
+  query = "SELECT * FROM containing INNER JOIN groups ON containing.group_id = groups.group_id WHERE containing.call_number=%s AND groups.status=%s;"
+  cursor = g.conn.execute(query, (str(call_number), 'open') )
+  group_list = []
+  for item in cursor.fetchall():
+    g_dict={}
+    g_dict['group_id'] = item['group_id']
+    g_dict['group_name'] = item['group_name']
+    g_dict['user_email'] = item['user_email']
+    g_dict['description'] = item['description']
+    group_list.append(g_dict)
+    print g_dict
+  return render_template('section.html', groups=group_list, course_id=course_id, call_number=call_number, course_title=course_title)
   
-  print('hello')
-  return render_template('section.html', groups=cur_group_data)
 
 if __name__ == "__main__":
   import click
