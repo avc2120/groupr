@@ -391,17 +391,20 @@ def section(course_id,call_number):
   result = cursor.fetchone()
   course_title = result['course_title']
 
+
   query = "SELECT * FROM containing INNER JOIN groups ON containing.group_id = groups.group_id WHERE containing.call_number=%s AND groups.status=%s;"
   cursor = g.conn.execute(query, (str(call_number), 'open') )
   group_list = []
   for item in cursor.fetchall():
     g_dict={}
-    g_dict['group_id'] = item['group_id']
-    g_dict['group_name'] = item['group_name']
-    g_dict['user_email'] = item['user_email']
-    g_dict['description'] = item['description']
-    group_list.append(g_dict)
-    print g_dict
+    cursor = g.conn.execute("SELECT * FROM belongs_to WHERE belongs_to.group_id = %s", (str(item['group_id']),))
+    if (len(cursor.fetchall())< item['size_limit']):
+      g_dict['group_id'] = item['group_id']
+      g_dict['group_name'] = item['group_name']
+      g_dict['user_email'] = item['user_email']
+      g_dict['description'] = item['description']
+      group_list.append(g_dict)
+      print g_dict
   return render_template('section.html', groups=group_list, course_id=course_id, call_number=call_number, course_title=course_title)
   
 

@@ -7,7 +7,7 @@
 <div class="list-group">
 	{% for item in groups %}
 	<a href="{{url_for('group', group_id=item.group_id)}}" class="list-group-item">
-		<h4 class="list-group-item-heading">Group Name: {{item.group_name}}</h4>
+		<h4 class="list-group-item-heading">{{item.group_name}}</h4>
 		<p class="list-group-item-text">Admin: {{item.user_email}} <br> Description: {{item.description}}</p>
 	</a>
 	{% endfor %}
