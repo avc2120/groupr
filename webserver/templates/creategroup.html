@@ -53,11 +53,9 @@
           <div class="col-lg-10">
             <select class="form-control" id="course" name="course">
               <option selected="selected" disabled>Select a course first!</option>
-              <option>1</option>
-              <option>2</option>
-              <option>3</option>
-              <option>4</option>
-              <option>5</option>
+              {% for course in courses %}
+                <option value="{{course.course_id}}">{{course.course_title}}, {{course.course_term}}</option>
+              {% endfor %}
             </select>
             <!-- Will dynamically generate all appropriate sections-->
             <select class="form-control" id="section" name="section">
@@ -76,17 +74,22 @@
 
   <script>
     $('#course').on('change', function() {
-      console.log('hello');
+      var courseToSection = {{c_to_s | tojson }}
+      //console.log(courseToSection);
       $('#section').empty();
-      $('#section').append('<option>' + $('#course').val() + '</option>');
+      sectionList = courseToSection[$('#course').val()];
+      for (var i=0; i<sectionList.length; i++) {
+        $('#section').append('<option value="' + sectionList[i]['call_number'].toString() + '">' + sectionList[i]['professor'] + '</option>');   
+      }
+
     });
 
-    $('#the-form').submit( function() {
-      if parseInt($('#limit').val()) < 2 {
-        alert('A group must have a minimum limit of 3 members!');
-        event.preventDefault();
-      }
-    });
+    // $('#the-form').submit( function() {
+    //   if parseInt($('#limit').val()) < 2 {
+    //     alert('A group must have a minimum limit of 3 members!');
+    //     event.preventDefault();
+    //   }
+    // });
       
   </script>
 {% endblock %}

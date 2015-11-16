@@ -231,7 +231,28 @@ def createGroup():
     return redirect(url_for('index'))
 
   if request.method == 'GET':
-    return render_template("creategroup.html", groups=cur_group_data)
+    query = "SELECT * FROM courses;"
+    cursor = g.conn.execute(query)
+    courses = []
+    course_to_section_dict = {}
+    for course in cursor.fetchall():
+      course_dict = {}
+      course_dict['course_id'] = course['course_id']
+      course_dict['course_title'] = course['course_title']
+      course_dict['term'] = course['term']
+      courses.append(course_dict)
+      query = "SELECT * from has_sections WHERE has_sections.course_id = %s;"
+      cursor2 = g.conn.execute(query, (str(course['course_id']),))
+      sections = []
+      for section in cursor2.fetchall():
+        section_dict = {}
+        section_dict['professor'] = section['professor']
+        section_dict['call_number'] = section['call_number']
+        sections.append(section_dict)
+      course_to_section_dict[course['course_id']] = sections
+    print course_to_section_dict
+    print courses
+    return render_template("creategroup.html", groups=cur_group_data, courses=courses, c_to_s=course_to_section_dict)
 
   global group_id, groupid_postid, cur_group_id
   group_id += 1
