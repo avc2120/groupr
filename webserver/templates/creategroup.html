@@ -84,9 +84,15 @@
 
     });
 
-    $('#the-form').submit( function() {
-      //event.preventDefault();
-      //console.log($('#is_unlimited:checked').val());
+    $('#the-form').submit( function(event) {
+      console.log('tried to submit');
+      if($.trim($('#group_name').val()) === "" || $.trim($('#description').val()) === "" || $.trim($('#course').val()) === "default") {
+        console.log($.trim($('#group_name').val()));
+        console.log($.trim($('#description').val()));
+        console.log($.trim($('#course').val()));
+        alert('Please fill out all fields!');
+        event.preventDefault();
+      }
       if ($('#is_unlimited:checked').val() !== "on")
       {
    
@@ -103,15 +109,6 @@
           return;
         }   
 
-      }
-
-      if($.trim($('#group_name').val()) === "" || $.trim($('#description').val()) === "" || $.trim($('#course').val()) === "default")
-      {
-        console.log($.trim($('#group_name').val()));
-        console.log($.trim($('#description').val()));
-        console.log($.trim($('#course').val()));
-        //alert('Please fill out all fields!');
-        event.preventDefault();
       }
 
     });

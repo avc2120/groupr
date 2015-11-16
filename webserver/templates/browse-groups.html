@@ -1,8 +1,21 @@
 {% extends "logged-in.html" %}
 {% block subtitle %}Browse Groups!{% endblock %}
 {% block content %}
+
+	{% with messages = get_flashed_messages() %}
+  	{% if messages %}
+    	{% for message in messages %}
+				<div class="alert alert-dismissible alert-success">
+				  <button type="button" class="close" data-dismiss="alert">X</button>
+				  {{ message }}
+				</div>
+    	{% endfor %}
+  	{% endif %}
+	{% endwith %}
+
 <h2>Courses</h2>
 <p class="lead">Select a course to view all sections of that course.</p>
+<p class="lead">Don't see your course here? <a data-toggle="modal" data-target="#courseModal">Add your course!</a></p>
 <br>
 <div class="list-group">
 	{% for item in courses %}
@@ -12,5 +25,68 @@
 	</a>
 	{% endfor %}
 </div>
+
+{% endblock %}
+
+{% block modals %}
+	<div class="modal fade" id="courseModal" tabindex="-1" role="dialog">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>
+	        <h4 class="modal-title">Add Course: </h4>
+	      </div>
+	      <div class="modal-body">
+	        <form id="addCourse" method="POST" action="{{url_for('browse_groups')}}">
+
+				    <div class="form-group">
+				    	<label class="control-label">Course Title</label>
+				    	<input type="text" name="course_title" id="course_title" class="form-control"/>
+				    </div>
+
+				    <div class="form-group">
+				    	<label class="control-label">Department</label>
+				    	<input type="text" name="department" id="department" class="form-control" />
+				    </div>
+
+				    <div class="form-group">
+				    	<label class="control-label">Term</label>
+
+				    	<div class="row">
+					    	<div class="col-lg-6">
+					    		<select class="form-control" name="semester">
+					    			<option value="FALL">Fall</option>
+					    			<option value="SPRING">Spring</option>
+					    			<option value="SUMMER">Summer</option>
+					    		</select>
+					    	</div>
+					    	<div class="col-lg-6">
+					    		<select class="form-control" name="year">
+					    			<option value="2015">2015</option>
+					    			<option value="2016">2016</option>
+					    		</select>
+					    	</div>
+					    </div>
+				    </div>
+
+			    </form>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-primary" id="submit">Add Course</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<script>
+		$('#submit').click( function() {
+			if ($.trim($('#department').val()) === '' || $.trim($('#course_title').val()) === '') {
+				alert('Please fill in all fields!');
+				return;	
+			}
+			$('#addCourse').submit();
+		});
+
+	</script>
 
 {% endblock %}

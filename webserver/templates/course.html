@@ -2,15 +2,85 @@
 {% block subtitle %}Course{% endblock %}
 
 {% block content %}
+	{% with messages = get_flashed_messages(with_categories=true) %}
+  	{% if messages %}
+    	{% for category, message in messages %}
+				<div class="alert alert-dismissible alert-{{category}}">
+				  <button type="button" class="close" data-dismiss="alert">X</button>
+				  {{ message }}
+				</div>
+    	{% endfor %}
+  	{% endif %}
+	{% endwith %}
+
 <h2>Sections: {{course_name}}</h2>
 <p class="lead">Select a section to view all groups in that section!</p>
+<p class="lead">Don't see your section here? <a data-toggle="modal" data-target="#sectionModal">Add your section!</a></p>
 <br>
-<div class="list-group">
-	{% for item in sections %}
-	<a href="{{url_for('section', call_number=item.call_number, course_id=item.course_id)}}" class="list-group-item">
-		<h4 class="list-group-item-heading">Call Number: {{item.call_number}}</h4>
-		<p class="list-group-item-text">Professor: {{item.professor}}</p>
-	</a>
-	{% endfor %}
-</div>
+{% if sections == [] %}
+	<h3><em>No sections to display!</em></h3> 
+{% else %}
+	<div class="list-group">
+		{% for item in sections %}
+		<a href="{{url_for('section', call_number=item.call_number, course_id=item.course_id)}}" class="list-group-item">
+			<h4 class="list-group-item-heading">Call Number: {{item.call_number}}</h4>
+			<p class="list-group-item-text">Professor: {{item.professor}}</p>
+		</a>
+		{% endfor %}
+	</div>
+{% endif %}
+
+{% endblock %}
+
+{% block modals %}
+	<div class="modal fade" id="sectionModal" tabindex="-1" role="dialog">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>
+	        <h4 class="modal-title">Add Section: </h4>
+	      </div>
+	      <div class="modal-body">
+	        <form id="addSection" method="POST" action="{{url_for('course', course_id=course_id)}}">
+
+				    <div class="form-group">
+				    	<label class="control-label">Call Number</label>
+				    	<input type="text" name="call" id="call" class="form-control"/>
+				    </div>
+
+				    <div class="form-group">
+				    	<label class="control-label">Professor</label>
+				    	<input type="text" name="prof" id="prof" class="form-control" />
+				    </div>
+
+			    </form>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-primary" id="submit">Add Course</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<script>
+		$('#submit').click( function() {
+			if ($.trim($('#call').val()) === '' || $.trim($('#prof').val()) === '') {
+				alert('Please fill in all fields!');
+				return;	
+			}
+			if (isNaN(parseInt($('#call').val()))) {
+				alert('Enter a real number!');
+				return;
+			}			
+			if (parseInt($('#call').val()) <= 0) {
+				alert('Enter a valid call number!');
+				return;
+			}
+
+			$('#addSection').submit();
+		});
+
+	</script>
+
+
 {% endblock %}

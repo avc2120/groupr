@@ -5,11 +5,13 @@
 <h2>Groups in Section for {{course_title}}, call number {{call_number}}</h2>
 <p class="lead">Displaying all open groups in this section. </p>
 <br>
-{% if groups == [] %}
-	<h3><em>No groups to display!</em></h3>
+{% if group_list == [] %}
+	<h3><em>No groups to display!</em></h3> 
+	<h4><em>
+	You can create a new group by clicking <strong>Create New Group</strong> under <strong>My Groups</strong>.</em></h4>
 {% else %}
 	<div class="list-group">
-		{% for item in groups %}
+		{% for item in group_list %}
 		<a href="{{url_for('group', group_id=item.group_id)}}" class="list-group-item">
 			<h4 class="list-group-item-heading">{{item.group_name}}</h4>
 			<p class="list-group-item-text">Admin: {{item.user_email}} <br> Description: {{item.description}}</p>

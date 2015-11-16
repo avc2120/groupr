@@ -64,7 +64,9 @@ def teardown_request(exception):
 
 @app.route('/', methods=["POST", "GET"])
 def index():
+  global g, cur_group_data
   if request.method == "POST":
+    cur_group_data = []
     email = request.form["email"]
     query = "SELECT * FROM users WHERE user_email=%s;"
     cursor = g.conn.execute(query, (email,))
@@ -108,6 +110,7 @@ def login():
       session["housing"] = result["housing"]
       session['description'] = result['description']
       
+      cur_group_data = []
       q= """SELECT group_id FROM belongs_to WHERE user_email=%s"""
       cursor = g.conn.execute(q,(email,))
       results = cursor.fetchall()
@@ -215,16 +218,41 @@ def search():
     return redirect(url_for('index'))
 
   query = request.args["query"]
-  print query
   cursor = g.conn.execute("SELECT * FROM groups;")
   results = []
   for item in cursor:
-    if query.lower() in item['group_name'].lower():
-      results.append(item)
+    if query.lower() in item['group_name'].lower() and item['status'] == 'open':
+      print(item)
+      temp = {}
+      temp['group_id'] = item['group_id']
+      temp['group_name'] = item['group_name']
+      temp['user_email'] = item['user_email']
+      temp['description'] = item['description']
+      temp['is_limited'] = item['is_limited']
+      temp['size_limit'] = item['size_limit']
+      temp['in_users_groups'] = False
+      for group in cur_group_data:
+        if item['group_id'] == group['group_id']:
+          temp['in_users_groups'] = True
+          break
+      #check if 
+      temp['joinable'] = True
+      if temp['in_users_groups'] == False and temp['is_limited'] == True:
+        number = get_group_member_number(item['group_id'])
+        if number >= temp['size_limit']:
+          temp['joinable'] = False
+
+      results.append(temp)
+
   cursor.close()
-  context = dict(data = results)
-  return render_template("home.html", user_email=session['email'], name=session['username'], **context)
-  
+  return render_template("home.html", groups=cur_group_data, user_email=session['email'], name=session['username'], results=results)
+
+def get_group_member_number(group_id):
+  query = """SELECT count(*) FROM belongs_to WHERE group_id=%s;"""
+  cursor = g.conn.execute(query, (group_id,))
+  for result in cursor.fetchall():
+    return result['count']  
+
 @app.route("/creategroup/", methods=["POST", "GET"])
 def createGroup():
   if session.get('email') == None:
@@ -372,10 +400,21 @@ def get_username(user_email):
   for item in cursor.fetchall():
     return item['name']
 
-@app.route('/browse_groups')
+@app.route('/browse_groups', methods=['GET','POST'])
 def browse_groups():
   if session.get('email') == None:
     return redirect(url_for('index'))
+
+  #add courses
+  if request.method == 'POST':
+    course_id = str(rand_id())
+    term = request.form['semester'] + ' ' + request.form['year'] 
+    department = request.form['department']
+    course_title = request.form['course_title']
+    query = "INSERT INTO courses VALUES(%s,%s,%s,%s);"
+    g.conn.execute(query, (course_title, course_id, term, department))
+    flash('Successfully added course!')
+    return(redirect(url_for('browse_groups')))
 
   cursor = g.conn.execute("SELECT * FROM courses ORDER BY course_title ASC;")
   course_list = []
@@ -386,7 +425,7 @@ def browse_groups():
     c['term'] = item['term']
     c['department'] = item['department']
     course_list.append(c)
-    print c
+    
   return render_template('browse-groups.html', courses=course_list, groups=cur_group_data)
 
 @app.route('/course/<int:course_id>', methods=['GET','POST'])
@@ -394,10 +433,29 @@ def course(course_id):
   if session.get('email') == None:
     return redirect(url_for('index'))
 
-  #don't see your course? add it
+  #don't see your section? add it
   if request.method == 'POST':
-    print('hello')
+    call_number = request.form['call'] 
+    professor = request.form['prof']
+    query = "SELECT call_number FROM has_sections;"
+    list_call_numbers = []
+    cursor = g.conn.execute(query)
+    for c_num in cursor.fetchall():
+      list_call_numbers.append(c_num['call_number'])
+    
+    if (int(call_number)) in list_call_numbers:
+      flash('This call number is registered with a section already!', 'danger')
+      return redirect(url_for('course', course_id=course_id))
+
+    query = "INSERT INTO has_sections VALUES(%s,%s,%s);"
+    g.conn.execute(query, (call_number, professor, course_id))   
+    flash('Section successfully added!', 'success')
     return redirect(url_for('course', course_id=course_id))
+
+  query = "SELECT course_title FROM courses WHERE course_id=%s"
+  cursor = g.conn.execute(query, (str(course_id),))
+  for item in cursor.fetchall():
+    course_name = item['course_title']
 
   query = "SELECT * FROM has_sections INNER JOIN courses ON has_sections.course_id = courses.course_id WHERE courses.course_id = %s;"
   cursor = g.conn.execute(query, (str(course_id),))
@@ -405,13 +463,12 @@ def course(course_id):
 
   for item in cursor.fetchall():
     c = {}
-    course_name = c['course_title'] = item['course_title']
     c['course_id'] = course_id
     c['call_number'] = item['call_number']
     c['professor'] = item['professor']
     section_list.append(c)
-    print c
-  return render_template('course.html', groups=cur_group_data, sections=section_list, course_name=course_name)
+
+  return render_template('course.html', groups=cur_group_data, sections=section_list, course_name=course_name, course_id=course_id)
 
 @app.route('/course/<int:course_id>/<int:call_number>', methods=['GET','POST'])
 def section(course_id,call_number):
@@ -440,7 +497,7 @@ def section(course_id,call_number):
       g_dict['description'] = item['description']
       group_list.append(g_dict)
       print g_dict
-  return render_template('section.html', groups=group_list, course_id=course_id, call_number=call_number, course_title=course_title)
+  return render_template('section.html', groups=cur_group_data, group_list=group_list, course_id=course_id, call_number=call_number, course_title=course_title)
 
 
 @app.route('/group_to_user_request', methods=['POST'])
