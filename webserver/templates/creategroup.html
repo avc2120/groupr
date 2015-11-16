@@ -10,7 +10,7 @@
         <div class="form-group">
           <label class="col-lg-2 control-label">Group Name: </label>
           <div class="col-lg-10">
-            <input type="text" class="form-control" name="groupname">
+            <input id="group_name" type="text" class="form-control" name="group_name">
           </div>
         </div>
         <div class="form-group">
@@ -19,7 +19,7 @@
             <input type="text" class="form-control" name="limit" id="limit">
             <div class="checkbox">
               <label>
-                <input type="checkbox" name="is-unlimited"> Check if Unlimited Number of Members!
+                <input type="checkbox" name="is_unlimited" id="is_unlimited"> Check if Unlimited Number of Members!
               </label>
             </div>
           </div>
@@ -52,7 +52,7 @@
           <label for="select" class="col-lg-2 control-label">Course and Section: </label>
           <div class="col-lg-10">
             <select class="form-control" id="course" name="course">
-              <option selected="selected" disabled>Select a course first!</option>
+              <option selected="selected" value="default" disabled>Select a course first!</option>
               {% for course in courses %}
                 <option value="{{course.course_id}}">{{course.course_title}}, {{course.course_term}}</option>
               {% endfor %}
@@ -84,12 +84,31 @@
 
     });
 
-    // $('#the-form').submit( function() {
-    //   if parseInt($('#limit').val()) < 2 {
-    //     alert('A group must have a minimum limit of 3 members!');
-    //     event.preventDefault();
-    //   }
-    // });
+    $('#the-form').submit( function() {
+      event.preventDefault();
+      console.log($('#is_unlimited:checked').val());
+      if ($('#is_unlimited:checked').val() !== "on")
+      {
+        if (parseInt($('#limit').val()) < 2) 
+        {
+          alert('Minimum limit is 2 members!');
+          event.preventDefault();
+          return;
+        }      
+        else if (parseInt($('#limit').val()) === NaN)
+        {
+          alert('Enter an integer for limit!');
+          event.preventDefault();
+          return;
+        }
+      }
+      if($.trim($('#group_name').val()) === "" || $.trim($('#description').val()) === "" || $.trim($('#course').val()) === "default")
+      {
+        alert('Please fill out all fields!');
+        event.preventDefault();
+      }
+
+    });
       
   </script>
 {% endblock %}

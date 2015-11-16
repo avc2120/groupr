@@ -250,37 +250,32 @@ def createGroup():
         section_dict['call_number'] = section['call_number']
         sections.append(section_dict)
       course_to_section_dict[course['course_id']] = sections
-    print course_to_section_dict
-    print courses
     return render_template("creategroup.html", groups=cur_group_data, courses=courses, c_to_s=course_to_section_dict)
 
   global group_id, groupid_postid, cur_group_id
-  group_id += 1
-  groupid_postid[group_id] = 0
-  cur_group_id = group_id
-  group_name = request.args["groupname"]
-  group_des = request.args["description"]
-  group_lim = int(request.args["limit"])
-  group_status = request.args["status"]
-  group_status_string = "closed"
+  group_id = str(rand_id())
+  group_name = request.form.get('group_name')
+  group_des = request.form.get('description')
+  is_unlimited = request.form.get('is_unlimited')
+  group_lim = int(request.form.get('limit'))
+  group_status = request.form.get('optionsRadios')
 
   is_limited = True
-  if(group_lim == None):
-    is_limited = False
-  if (group_status == "on"):
-    group_status_string = "open"
+  if(is_unlimited == None):
+    islimited = False
 
   print group_name, group_des, group_lim, group_status
-  print group_id, group_name, session["email"], group_des, int(group_lim), group_status_string
-  query = "INSERT INTO groups VALUES(%d,%s,%s,%s,%d,%r,%s);"
-  engine.execute(query, (int(group_id), group_name, session["email"], group_des, int(group_lim), is_limited, group_status_string))
+  print group_id, group_name, session["email"], group_des, int(group_lim), group_status
+  query = "INSERT INTO groups VALUES(%d,%s,%s,%s,%s,%s,%s);"
+  #engine.execute(query, (int(group_id), group_name, session["email"], group_des, int(group_lim), is_limited, group_status))
   print "Success!"
-  if(is_limited):
-    return render_template("group.html", user_email=session["email"], 
-      group_name=group_name, group_description=group_des, group_admin=session["email"], size_limit=group_lim)
-  else:
-    return render_template("group.html", user_email=session["email"], 
-      group_name=group_name, group_description=group_des, group_admin=session["email"])
+
+  # if(is_limited):
+  #   return render_template("group.html", user_email=session["email"], 
+  #     group_name=group_name, group_description=group_des, group_admin=session["email"], size_limit=group_lim)
+  # else:
+  #   return render_template("group.html", user_email=session["email"], 
+  #     group_name=group_name, group_description=group_des, group_admin=session["email"])
 
 @app.route('/manage_group/<int:group_id>/')
 def manage_group(group_id):
