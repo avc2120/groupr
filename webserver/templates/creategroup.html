@@ -27,7 +27,7 @@
         <div class="form-group">
           <label for="textArea" class="col-lg-2 control-label">Description: </label>
           <div class="col-lg-10">
-            <textarea class="form-control" rows="3" name="description"></textarea>
+            <textarea class="form-control" rows="3" name="description" id="description"></textarea>
             <span class="help-block">What is your group all about? Is it for a specific project, or a general study group? Is it a hub to share resources or ask questions? </span>
           </div>
         </div>
@@ -54,7 +54,7 @@
             <select class="form-control" id="course" name="course">
               <option selected="selected" value="default" disabled>Select a course first!</option>
               {% for course in courses %}
-                <option value="{{course.course_id}}">{{course.course_title}}, {{course.course_term}}</option>
+                <option value="{{course.course_id}}">{{course.course_title}}, {{course.term}}</option>
               {% endfor %}
             </select>
             <!-- Will dynamically generate all appropriate sections-->
@@ -85,26 +85,32 @@
     });
 
     $('#the-form').submit( function() {
-      event.preventDefault();
-      console.log($('#is_unlimited:checked').val());
+      //event.preventDefault();
+      //console.log($('#is_unlimited:checked').val());
       if ($('#is_unlimited:checked').val() !== "on")
       {
-        if (parseInt($('#limit').val()) < 2) 
-        {
-          alert('Minimum limit is 2 members!');
-          event.preventDefault();
-          return;
-        }      
-        else if (parseInt($('#limit').val()) === NaN)
+   
+        if (parseInt($('#limit').val()) === NaN)
         {
           alert('Enter an integer for limit!');
           event.preventDefault();
           return;
         }
+        else if (parseInt($('#limit').val()) < 2) 
+        {
+          alert('Minimum limit is 2 members!');
+          event.preventDefault();
+          return;
+        }   
+
       }
+
       if($.trim($('#group_name').val()) === "" || $.trim($('#description').val()) === "" || $.trim($('#course').val()) === "default")
       {
-        alert('Please fill out all fields!');
+        console.log($.trim($('#group_name').val()));
+        console.log($.trim($('#description').val()));
+        console.log($.trim($('#course').val()));
+        //alert('Please fill out all fields!');
         event.preventDefault();
       }
 

@@ -266,16 +266,16 @@ def createGroup():
 
   print group_name, group_des, group_lim, group_status
   print group_id, group_name, session["email"], group_des, int(group_lim), group_status
-  query = "INSERT INTO groups VALUES(%d,%s,%s,%s,%s,%s,%s);"
-  #engine.execute(query, (int(group_id), group_name, session["email"], group_des, int(group_lim), is_limited, group_status))
+  query = "INSERT INTO groups VALUES(%s,%s,%s,%s,%s,%s,%s);"
+  engine.execute(query, (group_id, group_name, session["email"], group_des, group_lim, is_limited, group_status))
   print "Success!"
 
-  # if(is_limited):
-  #   return render_template("group.html", user_email=session["email"], 
-  #     group_name=group_name, group_description=group_des, group_admin=session["email"], size_limit=group_lim)
-  # else:
-  #   return render_template("group.html", user_email=session["email"], 
-  #     group_name=group_name, group_description=group_des, group_admin=session["email"])
+  if(is_limited):
+    return render_template("group.html", user_email=session["email"], 
+      group_name=group_name, group_description=group_des, group_admin=session["email"], size_limit=group_lim)
+  else:
+    return render_template("group.html", user_email=session["email"], 
+      group_name=group_name, group_description=group_des, group_admin=session["email"])
 
 @app.route('/manage_group/<int:group_id>/')
 def manage_group(group_id):
