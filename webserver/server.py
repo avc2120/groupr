@@ -358,6 +358,7 @@ def createGroup():
 
 @app.route('/manage_group/<int:group_id>/', methods=['GET','POST'])
 def manage_group(group_id):
+  global g, cur_group_data
   if session.get('email') == None:
     return redirect(url_for('index'))
 
@@ -391,6 +392,7 @@ def manage_group(group_id):
   if request.method == 'POST':
     is_unlimited = request.form.get('is_unlimited')
     group_lim = request.form.get('limit')
+
     if(is_unlimited == None):
       num_members = get_group_member_number(group_id)
       if int(group_lim) < num_members:
@@ -398,12 +400,17 @@ def manage_group(group_id):
       else:
         query = "UPDATE groups SET is_limited=%s, size_limit=%s WHERE group_id=%s;"
         g.conn.execute(query, (True,str(group_lim),str(group_id)))
+        for group in cur_group_data:
+          if group['group_id'] == int(group_id):
+            group['is_limited'] = True
+            group['size_limit'] = int(group_lim)
         flash('successfully changed group size limit','success')        
     else:
       query = "UPDATE groups SET is_limited=%s WHERE group_id=%s;"
       g.conn.execute(query, (False,str(group_id)))
+      if group['group_id'] == group_id:
+        group['is_limited'] = False
       flash('successfully changed group size limit','success')
-    
     return redirect(url_for('manage_group', group_id=group_id))
 
 
