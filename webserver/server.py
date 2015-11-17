@@ -139,11 +139,82 @@ def login():
   else:
     return render_template("login.html", error="")
 
-@app.route('/dashboard/')
+@app.route('/dashboard/', methods=['GET','POST'])
 def home():
   if session.get('email') == None:
     return redirect(url_for('index'))  
-  return render_template('home.html', user_email = session['email'], name=session['username'], groups=cur_group_data)
+
+  results = []
+  if request.method == 'POST':
+    query = request.form["query"]
+    cursor = g.conn.execute("SELECT * FROM groups;")
+    for item in cursor:
+      if query.lower() in item['group_name'].lower() and item['status'] == 'open':
+        temp = {}
+        temp['group_id'] = item['group_id']
+        temp['group_name'] = item['group_name']
+        temp['user_email'] = item['user_email']
+        temp['description'] = item['description']
+        temp['is_limited'] = item['is_limited']
+        temp['size_limit'] = item['size_limit']
+        temp['in_users_groups'] = False
+        for group in cur_group_data:
+          if item['group_id'] == group['group_id']:
+            temp['in_users_groups'] = True
+            break
+        #check if 
+        temp['joinable'] = True
+        if temp['in_users_groups'] == False and temp['is_limited'] == True:
+          number = get_group_member_number(item['group_id'])
+          if number >= temp['size_limit']:
+            temp['joinable'] = False
+
+        results.append(temp)
+
+    requests_admin = []
+    query = "SELECT designate_admin.old_admin, designate_admin.group_id, groups.group_name FROM designate_admin INNER JOIN groups ON designate_admin.group_id = groups.group_id WHERE designate_admin.new_admin=%s"
+    cursor = g.conn.execute(query, (session['email'],))
+    for item in cursor.fetchall():
+      a = {}
+      a['old_admin'] = item['old_admin']
+      a['group_name'] = item['group_name']
+      a['group_id'] = item['group_id']
+      requests_admin.append(a)
+
+    requests = []
+    query = "SELECT requests_join.group_id, requests_join.message, groups.group_name, requests_join.user_email FROM requests_join INNER JOIN groups ON requests_join.group_id = groups.group_id WHERE requests_join.user_email=%s AND requests_join.direction = %s;"
+    cursor = g.conn.execute(query, (session['email'], 'group_to_user'))
+    for item in cursor.fetchall():
+      r = {}
+      r['group_id'] = item['group_id']
+      r['message'] = item['message']
+      r['group_name'] = item['group_name'] 
+      requests.append(r)
+
+    return(render_template('home.html', results=results, requests_admin=requests_admin, user_email = session['email'], name=session['username'], groups=cur_group_data, requests=requests))
+
+
+  requests_admin = []
+  query = "SELECT designate_admin.old_admin, designate_admin.group_id, groups.group_name FROM designate_admin INNER JOIN groups ON designate_admin.group_id = groups.group_id WHERE designate_admin.new_admin=%s"
+  cursor = g.conn.execute(query, (session['email'],))
+  for item in cursor.fetchall():
+    a = {}
+    a['old_admin'] = item['old_admin']
+    a['group_name'] = item['group_name']
+    a['group_id'] = item['group_id']
+    requests_admin.append(a)
+
+  requests = []
+  query = "SELECT requests_join.group_id, requests_join.message, groups.group_name, requests_join.user_email FROM requests_join INNER JOIN groups ON requests_join.group_id = groups.group_id WHERE requests_join.user_email=%s AND requests_join.direction = %s;"
+  cursor = g.conn.execute(query, (session['email'], 'group_to_user'))
+  for item in cursor.fetchall():
+    r = {}
+    r['group_id'] = item['group_id']
+    r['message'] = item['message']
+    r['group_name'] = item['group_name'] 
+    requests.append(r)
+
+  return render_template('home.html', requests_admin=requests_admin, user_email = session['email'], name=session['username'], groups=cur_group_data, requests=requests)
 
 @app.route('/profile/')
 def my_profile():
@@ -211,41 +282,6 @@ def signout():
   session.pop('email', None)
   cur_group_data = []
   return redirect(url_for('index'))
-
-@app.route("/search/", methods=["POST", "GET"])
-def search():
-  if session.get('email') == None:
-    return redirect(url_for('index'))
-
-  query = request.args["query"]
-  cursor = g.conn.execute("SELECT * FROM groups;")
-  results = []
-  for item in cursor:
-    if query.lower() in item['group_name'].lower() and item['status'] == 'open':
-      print(item)
-      temp = {}
-      temp['group_id'] = item['group_id']
-      temp['group_name'] = item['group_name']
-      temp['user_email'] = item['user_email']
-      temp['description'] = item['description']
-      temp['is_limited'] = item['is_limited']
-      temp['size_limit'] = item['size_limit']
-      temp['in_users_groups'] = False
-      for group in cur_group_data:
-        if item['group_id'] == group['group_id']:
-          temp['in_users_groups'] = True
-          break
-      #check if 
-      temp['joinable'] = True
-      if temp['in_users_groups'] == False and temp['is_limited'] == True:
-        number = get_group_member_number(item['group_id'])
-        if number >= temp['size_limit']:
-          temp['joinable'] = False
-
-      results.append(temp)
-
-  cursor.close()
-  return render_template("home.html", groups=cur_group_data, user_email=session['email'], name=session['username'], results=results)
 
 def get_group_member_number(group_id):
   query = """SELECT count(*) FROM belongs_to WHERE group_id=%s;"""
@@ -542,6 +578,25 @@ def group_to_user_request(user_email):
   print('hello')
   #this needs to be writted with a redirect
 
+@app.route('/accept_request/<int:group_id>', methods=["GET"])
+def accept_request(group_id):
+  flash('fake accepted','success')
+  return redirect(url_for("home"))
+
+@app.route('/decline_request/<int:group_id>', methods=["GET"])
+def decline_request(group_id):
+  flash('fake declined','danger')
+  return redirect(url_for("home"))
+
+@app.route('/accept_admin/<int:group_id>', methods=["GET"])
+def accept_admin(group_id):
+  flash('fake accepted admin','success')
+  return redirect(url_for("home"))
+
+@app.route('/decline_admin/<int:group_id>', methods=["GET"])
+def decline_admin(group_id):
+  flash('fake declined admin','danger')
+  return redirect(url_for("home"))
 
 if __name__ == "__main__":
   import click

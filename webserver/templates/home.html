@@ -13,7 +13,7 @@
     	{% endfor %}
   	{% endif %}
 	{% endwith %}
-	
+
 	<h1>Dashboard</h1>
 	<p class="lead"> Hello {{name}}! You're signed in with {{user_email}}</p>
 	<hr>
@@ -31,9 +31,34 @@
 	<br><br>
 	<hr>
 	<p class="lead">Your Pending Requests:</p>
+	{% for r in requests_admin %}
+		<div class="well">
+			{{r.old_admin}} wishes to designate you as the new admin.
+			<div class="btn-group pull-right">
+				<a class="btn btn-success" href="{{url_for('accept_admin', group_id=r.group_id)}}">Accept</a>
+				<a class="btn btn-danger" href="{{url_for('decline_admin', group_id=r.group_id)}}">Decline</a>
+			</div>
+			<br> Group: {{r.group_name}}
+		</div>
+	{% endfor %}
+
+	{% for request in requests %}
+		<div class="well">
+			{{request.group_name}} wants you to join!
+			<div class="btn-group pull-right">
+				<a class="btn btn-success" href="{{url_for('accept_request', group_id=request.group_id)}}">Accept</a>
+				<a class="btn btn-danger" href="{{url_for('decline_request', group_id=request.group_id)}}">Decline</a>
+			</div>
+			<br> Message: {{request.message}}
+		</div>
+	{% endfor %}
+	{% if requests_admin == [] and requests == [] %}
+		<h3><em> No pending requests! </em></h3>
+	{% endif %}
+
 	<!-- look from requests from all groups to this user -->
 	<hr>
-	<form method="GET" action="{{url_for('search')}}">
+	<form method="POST" action="{{url_for('home')}}">
 		<div class="form-group">
 			<label class="control-label">Search Open Groups by Name</label>
 			<div class="input-group">
@@ -44,24 +69,25 @@
 			</div>
 		</div>
 	</form>
-
-	{% if data == [] %}
-		<h3><em>No Results Found</em></h3>
-	{% else %}
-		<div class="list-group">
-			{% for item in results %}
-			<li class="list-group-item">
-				<h4>{{ item["group_name"] }}</h4>
-				{% if item['in_users_groups'] == True %}
-					<a class="btn btn-default pull-right" style="display:inline-block" href="{{url_for('group', group_id=item.group_id)}}">Go to Group</a>
-				{% elif item['in_users_groups'] == False and item['joinable'] == True %}
-					<button type="button" class="btn btn-danger pull-right" style="display:inline-block" data-toggle="modal" data-target="#reqModal-{{item.group_id}}"><span class="glyphicon glyphicon-star-empty"></span> &nbsp; Request to Join</button>
-				{% else %}
-				{% endif %}
-				<p>Admin: {{ item["user_email"] }} <br> Description: {{ item["description"] }}</p>
-			</li>
-			{% endfor %}
-		</div>
+	{% if results is defined %}
+		{% if results == [] %}
+			<h3><em>No Results Found</em></h3>
+		{% else %}
+			<div class="list-group">
+				{% for item in results %}
+				<li class="list-group-item">
+					<h4>{{ item["group_name"] }}</h4>
+					{% if item['in_users_groups'] == True %}
+						<a class="btn btn-default pull-right" style="display:inline-block" href="{{url_for('group', group_id=item.group_id)}}">Go to Group</a>
+					{% elif item['in_users_groups'] == False and item['joinable'] == True %}
+						<button type="button" class="btn btn-danger pull-right" style="display:inline-block" data-toggle="modal" data-target="#reqModal-{{item.group_id}}"><span class="glyphicon glyphicon-star-empty"></span> &nbsp; Request to Join</button>
+					{% else %}
+					{% endif %}
+					<p>Admin: {{ item["user_email"] }} <br> Description: {{ item["description"] }}</p>
+				</li>
+				{% endfor %}
+			</div>
+		{% endif %}
 	{% endif %}
 {% endblock %}
 
