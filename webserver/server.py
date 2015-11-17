@@ -435,7 +435,7 @@ def delete_group(group_id):
     return redirect(url_for('index'))
 
   for ind, group in enumerate(cur_group_data):
-    if group['group_id'] == group_id:
+    if group['group_id'] == int(group_id):
       g_dict = cur_group_data[ind]
       del cur_group_data[ind]
       break
@@ -454,7 +454,7 @@ def delete_group(group_id):
   g.conn.execute(q,(str(group_id),))
 
   flash('Successfully deleted group!', 'success')
-  redirect(url_for('home'))
+  return redirect(url_for('home'))
 
 
 @app.route('/leave_group/<int:group_id>/')
