@@ -860,7 +860,7 @@ def accept_admin(group_id):
 
 @app.route('/decline_admin/<int:group_id>', methods=["GET"])
 def decline_admin(group_id):
-  flash('fake declined admin','danger')
+  flash('Declined Admin Request','danger')
   query = "DELETE FROM designate_admin WHERE designate_admin.group_id = %s;"
   g.conn.execute(query, (str(group_id),))
   print 'Successfully deleted request'
