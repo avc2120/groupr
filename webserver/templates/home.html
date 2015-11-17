@@ -18,17 +18,18 @@
 	<p class="lead"> Hello {{name}}! You're signed in with {{user_email}}</p>
 	<hr>
 	<p class="lead"> You administrate these groups: </p>
+	<div class="well">
 	{% for group in groups %}
 		{% if user_email == group['user_email'] %}
-			<div class="col-lg-6">
-				<div class="btn-group btn-group-justified">
+				<div class="btn-group">
 					<a class="btn btn-default" href="{{url_for('group',group_id=group.group_id)}}">{{group.group_name}}</a>
 					<a class="btn btn-danger" href="{{url_for('manage_group',group_id=group.group_id)}}">Manage Group</a>
 				</div>
-			</div>
+				&nbsp; &nbsp; &nbsp;
 		{% endif %}
 	{% endfor %}
-	<br><br>
+	</div>
+	<br>
 	<hr>
 	<p class="lead">Your Pending Requests:</p>
 	{% for r in requests_admin %}

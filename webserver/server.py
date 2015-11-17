@@ -222,7 +222,7 @@ def my_profile():
     return redirect(url_for('index'))  
   return render_template('myprofile.html', email = session['email'], username = session['username'], major = session['major'], gender = session['gender'], year = session['year'], housing = session['housing'], description=session['description'], groups=cur_group_data)
 
-@app.route('/profile/<user_email>')
+@app.route('/profile/<user_email>', methods=['GET'])
 def profile(user_email):
   global g, cur_group_data
 
@@ -356,12 +356,99 @@ def createGroup():
   print cur_group_data
   return redirect(url_for("group", group_id=group_id))
 
-@app.route('/manage_group/<int:group_id>/')
+@app.route('/manage_group/<int:group_id>/', methods=['GET','POST'])
 def manage_group(group_id):
   if session.get('email') == None:
     return redirect(url_for('index'))
 
-  print('hello')
+  for ind, group in enumerate(cur_group_data):
+    if group['group_id'] == group_id:
+      g_dict = cur_group_data[ind]
+      break
+
+  if g_dict['user_email'] != session['email']:
+    flash('You do not have permission to access this page')
+    return redirect(url_for('home'))
+
+  #get list of members
+  members = []
+  query = """SELECT user_email, name FROM users WHERE user_email IN (SELECT user_email FROM belongs_to WHERE group_id=%s);"""
+  cursor = g.conn.execute(query, (group_id,))
+  results = cursor.fetchall()
+  for item in results:
+    u_d = {}
+    u_d['user_email'] = item['user_email']
+    u_d['name'] = item['name']
+    if item['user_email'] == session['email']:
+      #don't add self to members list
+      continue 
+    members.append(u_d)  
+
+  is_alone = False
+  if members == []:
+    is_alone = True
+
+  if request.method == 'POST':
+    is_unlimited = request.form.get('is_unlimited')
+    group_lim = request.form.get('limit')
+    if(is_unlimited == None):
+      num_members = get_group_member_number(group_id)
+      if group_lim < num_members:
+        flash('You cannot change group size to below the current number of members!', 'danger')
+      else:
+        query = "UPDATE groups SET is_limited=%s, size_limit=%s WHERE group_id=%s;"
+        g.conn.execute(query, (True,str(group_lim),str(group_id)))
+        flash('successfully changed group size limit','success')        
+    else:
+      query = "UPDATE groups SET is_limited=%s WHERE group_id=%s;"
+      g.conn.execute(query, (False,str(group_id)))
+      flash('successfully changed group size limit','success')
+    
+    return redirect(url_for('manage_group', group_id=group_id))
+
+
+  requests = []
+  query = "SELECT requests_join.group_id, requests_join.message, users.name, requests_join.user_email FROM requests_join INNER JOIN users ON requests_join.user_email = users.user_email WHERE requests_join.group_id=%s AND requests_join.direction = %s;"
+  cursor = g.conn.execute(query, (str(group_id), 'user_to_group'))
+  for item in cursor.fetchall():
+    r = {}
+    r['name'] = item['name']
+    r['user_email'] = item['user_email']
+    r['message'] = item['message']
+    requests.append(r)
+
+  return(render_template('manage-group.html', is_alone=is_alone, group=g_dict, groups=cur_group_data, requests=requests, member_list=members))
+
+@app.route('/delete_group/<int:group_id>')
+def delete_group(group_id):
+  #check if session[''] is group_id['admin']
+  #delete from cur_group_data, containing, belongs_to, then groups
+  global g, cur_group_data
+  if session.get('email') == None:
+    return redirect(url_for('index'))
+
+  for ind, group in enumerate(cur_group_data):
+    if group['group_id'] == group_id:
+      g_dict = cur_group_data[ind]
+      del cur_group_data[ind]
+      break
+
+  if g_dict['user_email'] != session['email']:
+    flash('You do not have permission to access this page')
+    return redirect(url_for('home'))
+
+  q = "DELETE FROM containing WHERE group_id=%s"
+  g.conn.execute(q,(str(group_id),))
+
+  q = "DELETE FROM belongs_to WHERE group_id=%s"
+  g.conn.execute(q,(str(group_id),))
+
+  q = "DELETE FROM groups WHERE group_id=%s"
+  g.conn.execute(q,(str(group_id),))
+
+  flash('Successfully deleted group!', 'success')
+  redirect(url_for('home'))
+
 
 @app.route('/leave_group/<int:group_id>/')
 def leave_group(group_id):
@@ -568,15 +655,158 @@ def section(course_id,call_number):
       g_dict['group_name'] = item['group_name']
       g_dict['user_email'] = item['user_email']
       g_dict['description'] = item['description']
+      g_dict['is_limited'] = item['is_limited']
+      g_dict['size_limit'] = item['size_limit']
+      g_dict['in_users_groups'] = False
+      for group in cur_group_data:
+        if item['group_id'] == group['group_id']:
+          g_dict['in_users_groups'] = True
+          break
+      g_dict['joinable'] = True
+      if g_dict['in_users_groups'] == False and g_dict['is_limited'] == True:
+        number = get_group_member_number(item['group_id'])
+        if number >= g_dict['size_limit']:
+          g_dict['joinable'] = False    
+                   
       group_list.append(g_dict)
-      print g_dict
+  
   return render_template('section.html', groups=cur_group_data, group_list=group_list, course_id=course_id, call_number=call_number, course_title=course_title)
 
+@app.route('/user_to_group_request2/<int:group_id>/<int:course_id>/<int:call_number>', methods=['POST'])
+def user_to_group_request2(group_id,course_id,call_number):
+  message = request.form["message-" + str(group_id)]
+  query = "SELECT * from requests_join WHERE requests_join.user_email = %s AND requests_join.group_id = %s;"
+  cursor = g.conn.execute(query, (session['email'], str(group_id)))
+  if len(cursor.fetchall()) > 0:
+    for item in cursor.fetchall():
+      if item['direction'] == 'group_to_user':
+        flash("A request has already been sent from this group to you!", "danger")
+      else:
+        flash("Your request to join this group is pending!", "danger")
+  else:
+    query = "INSERT INTO requests_join VALUES(%s,%s,%s,%s);"
+    g.conn.execute(query, (session['email'], str(group_id), message, 'user_to_group'))
+    flash('Successfully Sent Request to Join Group', 'success')
 
-@app.route('/group_to_user_request', methods=['POST'])
+  return redirect(url_for('section', course_id=course_id, call_number=call_number))
+
+@app.route('/group_to_user_request/<user_email>', methods=['POST'])
 def group_to_user_request(user_email):
-  print('hello')
-  #this needs to be writted with a redirect
+  group_id = request.form['whichgroup']
+  message = request.form['message']
+  query = "SELECT * from requests_join WHERE requests_join.user_email = %s AND requests_join.group_id = %s;"
+  cursor = g.conn.execute(query, (user_email, str(group_id)))
+  if len(cursor.fetchall()) > 0:
+    flash('A request has already been sent from this user to the selected group!', 'danger')  
+  else:
+    query = "INSERT INTO requests_join VALUES(%s,%s,%s,%s);"
+    g.conn.execute(query, (user_email, str(group_id), message, 'group_to_user'))
+    flash('Successfully sent request', 'success')    
+  return redirect(url_for('profile', user_email=user_email))
+
+@app.route('/accept_request_from_user/<int:group_id>/<user_email>')
+def accept_request_from_user(group_id,user_email):
+  global g, cur_group_data
+  if session.get('email') == None:
+    return redirect(url_for('index'))
+
+  for ind, group in enumerate(cur_group_data):
+    if group['group_id'] == group_id:
+      g_dict = cur_group_data[ind]
+      break
+
+  if g_dict['user_email'] != session['email']:
+    flash('You do not have permission to access this page')
+    return redirect(url_for('home')) 
+
+  query = "SELECT * FROM groups WHERE groups.group_id =%s;"
+  cursor = g.conn.execute(query, (group_id,))
+  result = cursor.fetchone()
+  g_dict = {}
+  g_dict['group_id'] = int(group_id)
+  g_dict['group_name'] = result['group_name']
+  g_dict['user_email'] = result['user_email']
+  g_dict['description'] = result['description']
+  g_dict['size_limit'] = result['size_limit']
+  g_dict['is_limited'] = result['is_limited']
+
+  if(result['is_limited'] == True and get_group_member_number(group_id) >= result['size_limit']):
+    flash('Group is at Capacity', 'warning')
+  else:
+    flash('Accepted Member Request','success')
+    query = "INSERT INTO belongs_to VALUES(%s, %s);"
+    g.conn.execute(query, (user_email, str(group_id)))
+    print 'Successfully accepted request'
+
+    query = "DELETE FROM requests_join WHERE requests_join.user_email = %s AND requests_join.group_id = %s;"
+    g.conn.execute(query, (user_email, str(group_id)))
+    print 'Successfully deleted request'
+
+  return redirect(url_for("manage_group", group_id=group_id))
+
+@app.route('/decline_request_from_user/<int:group_id>/<user_email>')
+def decline_request_from_user(group_id,user_email):
+  if session.get('email') == None:
+    return redirect(url_for('index'))
+
+  for ind, group in enumerate(cur_group_data):
+    if group['group_id'] == group_id:
+      g_dict = cur_group_data[ind]
+      break
+
+  if g_dict['user_email'] != session['email']:
+    flash('You do not have permission to access this page')
+    return redirect(url_for('home'))
+
+  flash('Declined Group Request','danger')
+  query = "DELETE FROM requests_join WHERE requests_join.user_email = %s AND requests_join.group_id = %s;"
+  g.conn.execute(query, (user_email, str(group_id)))
+  print 'Successfully deleted request'
+  return redirect(url_for("manage_group", group_id=group_id))
+
+@app.route('/kick_member/<int:group_id>/<user_email>')
+def kick_member(group_id,user_email):
+  if session.get('email') == None:
+    return redirect(url_for('index'))
+
+  for ind, group in enumerate(cur_group_data):
+    if group['group_id'] == group_id:
+      g_dict = cur_group_data[ind]
+      break
+
+  if g_dict['user_email'] != session['email']:
+    flash('You do not have permission to access this page')
+    return redirect(url_for('home'))
+
+  query = "DELETE FROM belongs_to WHERE user_email=%s AND group_id=%s;"
+  g.conn.execute(query, (user_email,str(group_id)))
+  flash('Successfully kicked member', 'success')
+  return redirect(url_for("manage_group", group_id=group_id))
+
+@app.route('/make_admin/<int:group_id>/<new_admin>')
+def make_admin(group_id,new_admin):
+  if session.get('email') == None:
+    return redirect(url_for('index'))
+
+  for ind, group in enumerate(cur_group_data):
+    if group['group_id'] == group_id:
+      g_dict = cur_group_data[ind]
+      break
+
+  if g_dict['user_email'] != session['email']:
+    flash('You do not have permission to access this page')
+    return redirect(url_for('home'))
+
+  query = "SELECT * FROM designate_admin WHERE old_admin=%s AND new_admin=%s AND group_id=%s;"
+  cursor = g.conn.execute(query,(session['email'],new_admin,str(group_id)))
+  if len(cursor.fetchall() > 0):
+    flash('You have already sent the admin designation request.', 'danger')
+  else:
+    q = "INSERT INTO designate_admin VALUES(%s,%s,%s);"
+    g.conn.execute(q,(str(group_id),session['email'],new_admin))
+    flash('Successfully sent admin designation request!', 'success')
+
+  return redirect(url_for("manage_group", group_id=group_id))
 
 @app.route('/accept_request/<int:group_id>', methods=["GET"])
 def accept_request(group_id):
@@ -592,7 +822,7 @@ def accept_request(group_id):
   g_dict['size_limit'] = result['size_limit']
   g_dict['is_limited'] = result['is_limited']
   cur_group_data.append(g_dict)
-  if(result['is_limited'] == True and get_group_member_number(group_id) == result['size_limit']):
+  if(result['is_limited'] == True and get_group_member_number(group_id) >= result['size_limit']):
     flash('Group is at Capacity', 'warning')
   else:
     flash('Accepted Group Request','success')
@@ -638,13 +868,16 @@ def decline_admin(group_id):
 
 @app.route('/user_to_group_request/<int:group_id>', methods=["POST"])
 def user_to_group_request(group_id):
-  print "here"
   message = request.form["message-" + str(group_id)]
   print message
   query = "SELECT * from requests_join WHERE requests_join.user_email = %s AND requests_join.group_id = %s;"
   cursor = g.conn.execute(query, (session['email'], str(group_id)))
   if len(cursor.fetchall()) > 0:
-    flash("A Request has already been sent to this Group!", "danger")
+    for item in cursor.fetchall():
+      if item['direction'] == 'group_to_user':
+        flash("A request has already been sent from this group to you!", "danger")
+      else:
+        flash("Your request to join this group is pending!", 'danger')
   else:
     query = "INSERT INTO requests_join VALUES(%s,%s,%s,%s);"
     g.conn.execute(query, (session['email'], str(group_id), message, 'user_to_group'))

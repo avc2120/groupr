@@ -1,28 +1,112 @@
 {% extends "logged-in.html" %}
-{% block subtitle %}{{group.group_name}}{% endblock %}
+{% block subtitle %}Manage {{group.group_name}}{% endblock %}
 
 {% block content %}
-	{% with messages = get_flashed_messages() %}
+	{% with messages = get_flashed_messages(with_categories=true) %}
   	{% if messages %}
-    	{% for message in messages %}
-				<div class="alert alert-dismissible alert-success">
+    	{% for category, message in messages %}
+				<div class="alert alert-dismissible alert-{{category}}">
 				  <button type="button" class="close" data-dismiss="alert">X</button>
 				  {{ message }}
 				</div>
     	{% endfor %}
   	{% endif %}
 	{% endwith %}
-<h2>My Groups</h2>
-<p class="lead">Select a course to view all sections of that course.</p>
-<p class="lead">Don't see your course here? <a data-toggle="modal" data-target="#courseModal">Add your course!</a></p>
-<br>
-<div class="list-group">
-	{% for item in courses %}
-	<a href="{{url_for('course',course_id=item.course_id)}}" class="list-group-item">
-		<h4 class="list-group-item-heading">{{item.course_title}}</h4>
-		<p class="list-group-item-text">Term: {{item.term}}, Department: {{item.department}}</p>
-	</a>
-	{% endfor %}
-</div>
+
+	<h1>Manage "{{group.group_name}}"</h1>
+	<br>
+	{% if is_alone == True %}
+		<h3><em>WARNING: group deletion is final! There is no way to retrieve any information after a deletion.</em></h3>
+		<a href="{{url_for('delete_group', group_id=group.group_id)}}", class="btn btn-danger">Delete Group</a>
+	{% endif %}
+	<br><br>
+
+	<p class="lead">Manage Requests</p>
+	{% if requests == [] %}
+		<h3><em> No pending requests! </em></h3>
+	{% else %}
+		{% for request in requests %}
+			<div class="well">
+				{{request.name}} wants to join!
+				<div class="btn-group pull-right">
+					<a class="btn btn-success" href="{{url_for('accept_request_from_user', group_id=group.group_id, user_email=request.user_email)}}">Accept</a>
+					<a class="btn btn-danger" href="{{url_for('decline_request_from_user', group_id=group.group_id, user_email=request.user_email)}}">Decline</a>
+				</div>
+				<br> Message: {{request.message}}
+			</div>
+		{% endfor %}
+	{% endif %}
+
+	<hr>
+	<p class="lead">Manage Members</p>
+	<table class="table table-striped">
+		<tbody>
+			{% for member in member_list %}
+				<tr>
+					<td>{{member.name}}</td>
+					<td>
+						<a href="{{url_for('kick_member', group_id=group.group_id, user_email=member.user_email)}}" class="btn btn-default">Kick</a>
+					</td>
+					<td>
+						<a href="{{url_for('make_admin', new_admin=member.user_email, group_id=group.group_id)}}" class="btn btn-primary">Designate Admin</a>
+					</td>
+			{% endfor %}
+		</tbody>
+	</table>
+	<hr>
+	<p class="lead">Change Group Size (Current Size: 
+	{% if group['is_limited'] == False %}
+		Unlimited
+	{% else %}
+		{{group['size_limit']}}
+	{% endif %}
+	)
+	</p>
+	<form class="form-horizontal" id="the-form" method="POST" action="{{url_for('manage_group', group_id=group.group_id)}}">
+    <div class="form-group">
+      <label class="col-lg-2 control-label">Size Limit (must be 2 or more):  </label>
+      <div class="col-lg-10">
+        <input type="text" class="form-control" name="limit" id="limit">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" name="is_unlimited" id="is_unlimited" 
+            {% if group['is_limited'] == False %}
+            	checked="checked"
+            {% endif %}
+            > Check if Unlimited Number of Members!
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="col-lg-10 col-lg-offset-2">
+        <input id="submission" type="submit" class="btn btn-primary" value="Submit" />
+      </div>
+    </div>
+
+  </form>
+
+  <script>
+    $('#the-form').submit( function(event) {
+      if ($('#is_unlimited:checked').val() !== "on")
+      {
+        if (parseInt($('#limit').val()) === NaN)
+        {
+          alert('Enter an integer for limit!');
+          event.preventDefault();
+          return;
+        }
+        else if (parseInt($('#limit').val()) < 2) 
+        {
+          alert('Minimum limit is 2 members!');
+          event.preventDefault();
+          return;
+        }   
+      }
+    });
+      
+  </script>
+
 
 {% endblock %}

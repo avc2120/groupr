@@ -2,6 +2,17 @@
 {% block subtitle %}Section{% endblock %}
 
 {% block content %}
+	{% with messages = get_flashed_messages(with_categories=true) %}
+  	{% if messages %}
+    	{% for category, message in messages %}
+				<div class="alert alert-dismissible alert-{{category}}">
+				  <button type="button" class="close" data-dismiss="alert">X</button>
+				  {{ message }}
+				</div>
+    	{% endfor %}
+  	{% endif %}
+	{% endwith %}
+
 <h2>Groups in Section for {{course_title}}, call number {{call_number}}</h2>
 <p class="lead">Displaying all open groups in this section. </p>
 <br>
@@ -12,11 +23,60 @@
 {% else %}
 	<div class="list-group">
 		{% for item in group_list %}
-		<a href="{{url_for('group', group_id=item.group_id)}}" class="list-group-item">
-			<h4 class="list-group-item-heading">{{item.group_name}}</h4>
-			<p class="list-group-item-text">Admin: {{item.user_email}} <br> Description: {{item.description}}</p>
-		</a>
+			<li class="list-group-item">
+			<h4>{{ item["group_name"] }}</h4>
+			{% if item['in_users_groups'] == True %}
+				<a class="btn btn-default pull-right" style="display:inline-block" href="{{url_for('group', group_id=item.group_id)}}">Go to Group</a>
+			{% elif item['in_users_groups'] == False and item['joinable'] == True %}
+				<button type="button" class="btn btn-danger pull-right" style="display:inline-block" data-toggle="modal" data-target="#reqModal-{{item.group_id}}"><span class="glyphicon glyphicon-star-empty"></span> &nbsp; Request to Join</button>
+			{% else %}
+			{% endif %}
+			<p>Admin: {{ item["user_email"] }} <br> Description: {{ item["description"] }}</p>
+			</li>
 		{% endfor %}
 	</div>
 {% endif %}
+{% endblock %}
+
+{% block modals %}
+	{% for item in group_list %}
+		{% if item['in_users_groups'] == False and item['joinable'] == True %}
+			<div class="modal fade" id="reqModal-{{item.group_id}}" tabindex="-1" role="dialog">
+			  <div class="modal-dialog" role="document">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">X</span></button>
+			        <h4 class="modal-title">Request to Join: {{item.group_name}}</h4>
+			      </div>
+			      <div class="modal-body">
+			        <form id="user-req-group-{{item.group_id}}" method="POST" action="{{url_for('user_to_group_request2', group_id=item.group_id, course_id=course_id, call_number=call_number)}}">
+
+						    <div class="form-group">
+						    	<label class="control-label">Message</label>
+						    	<textarea name="message-{{item.group_id}}" id="message-{{item.group_id}}" class="form-control"></textarea>
+						    </div>
+
+					    </form>
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-primary send" id="{{item.group_id}}">Send Request</button>
+			      </div>
+			    </div>
+			  </div>
+			</div>
+
+			<script>
+				$('.send').click(function() {
+					var whichModal = $(this).attr('id');
+					console.log(whichModal);
+					if ($.trim($('#message-' + whichModal).val()) === '') {
+						alert('Include a message!');
+					}
+					else {
+						$('#user-req-group-' + whichModal).submit();
+					}
+				});
+			</script>
+		{% endif %}
+	{% endfor %}
 {% endblock %}

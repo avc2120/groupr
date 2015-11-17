@@ -2,6 +2,17 @@
 {% block subtitle %}{{user.name}}'s Profile{% endblock %}
 
 {% block content %}
+	{% with messages = get_flashed_messages(with_categories=true) %}
+  	{% if messages %}
+    	{% for category, message in messages %}
+				<div class="alert alert-dismissible alert-{{category}}">
+				  <button type="button" class="close" data-dismiss="alert">X</button>
+				  {{ message }}
+				</div>
+    	{% endfor %}
+  	{% endif %}
+	{% endwith %}
+
 	<h1> {{user.name}}'s Profile </h1>
 	<hr>
 	<div class="panel panel-primary">
@@ -57,7 +68,7 @@
 	        <h4 class="modal-title">Invite to Group</h4>
 	      </div>
 	      <div class="modal-body">
-	        <form id="group-req-user" method="POST" action="url_for('group_to_user_request', user_email={{user.user_email}})">
+	        <form id="group-req-user" method="POST" action="{{url_for('group_to_user_request', user_email=user.user_email)}}">
 				   	<div class="form-group">
 				   		<label class="control-label">Invite to which group?</label>
 			        <select class="form-control" id="whichgroup" name="whichgroup">
