@@ -852,9 +852,13 @@ def decline_request(group_id):
 
 @app.route('/accept_admin/<int:group_id>', methods=["GET"])
 def accept_admin(group_id):
-  flash('Accepted Admin Request','success')
+  global g, cur_group_data
+  for group in cur_group_data:
+    if group['group_id'] == int(group_id):
+      group['user_email'] = session['email']
   query = "UPDATE groups SET user_email = %s WHERE group_id = %s;"
   g.conn.execute(query, (session['email'], str(group_id)))
+  flash('Accepted Admin Request','success')
   print 'Successfully accepted request'
 
   query = "DELETE FROM designate_admin WHERE designate_admin.group_id = %s;"
