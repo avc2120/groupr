@@ -5,6 +5,9 @@
 	{% if is_admin == True %}
 		<br>
 		<a class="btn btn-danger" href="{{url_for('manage_group',group_id=group.group_id)}}">Manage Group as Admin</a>
+	{% else %}
+		<br>
+		<a class="btn btn-danger" href="{{url_for('leave_group', group_id=group.group_id)}}">Leave Group</a>
 	{% endif %}
 
 	{% with messages = get_flashed_messages() %}

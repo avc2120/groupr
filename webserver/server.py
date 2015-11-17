@@ -327,6 +327,26 @@ def manage_group(group_id):
 
   print('hello')
 
+@app.route('/leave_group/<int:group_id>/')
+def leave_group(group_id):
+  global g, cur_group_data
+  if session.get('email') == None:
+    return redirect(url_for('index'))
+  query = "DELETE FROM belongs_to WHERE belongs_to.group_id = %s AND belongs_to.user_email = %s;"
+  g.conn.execute(query, (str(group_id), session['email']))
+  found_group = False
+  for ind, group in enumerate(cur_group_data):
+    if(group_id == group['group_id']):
+      name = group['group_name']
+      del cur_group_data[ind]
+      flash('Successfully Left ' + name + '!', "success")
+      found_group = True
+      break
+  if(found_group == False):
+    flash('Something came up!', "danger")
+
+  return redirect(url_for("home"))
+
 @app.route('/group/<int:group_id>', methods=['GET','POST'])
 def group(group_id):
   global g, cur_group_data
