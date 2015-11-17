@@ -580,17 +580,51 @@ def group_to_user_request(user_email):
 
 @app.route('/accept_request/<int:group_id>', methods=["GET"])
 def accept_request(group_id):
-  flash('fake accepted','success')
+  global g, cur_group_data
+  flash('Accepted Group Request','success')
+  query = "INSERT INTO belongs_to VALUES(%s, %s);"
+  g.conn.execute(query, (session['email'], str(group_id)))
+  print 'Successfully accepted request'
+
+  query = "DELETE FROM requests_join WHERE requests_join.user_email = %s AND requests_join.group_id = %s;"
+  g.conn.execute(query, (session['email'], str(group_id)))
+  print 'Successfully deleted request'
+
+  query = "SELECT * FROM groups WHERE groups.group_id =%s;"
+  cursor = g.conn.execute(query, (group_id,))
+  result = cursor.fetchone()
+  g_dict = {}
+  g_dict['group_id'] = int(group_id)
+  g_dict['group_name'] = result['group_name']
+  g_dict['user_email'] = result['user_email']
+  g_dict['description'] = result['description']
+  g_dict['size_limit'] = result['size_limit']
+  g_dict['is_limited'] = result['is_limited']
+  cur_group_data.append(g_dict)
+
   return redirect(url_for("home"))
 
 @app.route('/decline_request/<int:group_id>', methods=["GET"])
 def decline_request(group_id):
-  flash('fake declined','danger')
+  flash('Declined Group Request','danger')
+  query = "DELETE FROM requests_join WHERE requests_join.user_email = %s AND requests_join.group_id = %s;"
+  g.conn.execute(query, (session['email'], str(group_id)))
+  print 'Successfully deleted request'
   return redirect(url_for("home"))
 
 @app.route('/accept_admin/<int:group_id>', methods=["GET"])
 def accept_admin(group_id):
   flash('fake accepted admin','success')
+  query = "UPDATE groups SET user_email = %s WHERE group_id = %s;"
+  g.conn.execute(query, (session['email'], str(group_id)))
+  print 'Successfully accepted request'
+
+  query = "DELETE FROM designate_admin WHERE designate_admin.group_id = %s;"
+  g.conn.execute(query, (str(group_id),))
+  print 'Successfully deleted request'
+  for group in cur_group_data:
+    if group['group_id'] == group_id:
+      group['user_email'] = session['email']
   return redirect(url_for("home"))
 
 @app.route('/decline_admin/<int:group_id>', methods=["GET"])
