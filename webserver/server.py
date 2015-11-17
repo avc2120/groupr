@@ -799,7 +799,7 @@ def make_admin(group_id,new_admin):
 
   query = "SELECT * FROM designate_admin WHERE old_admin=%s AND new_admin=%s AND group_id=%s;"
   cursor = g.conn.execute(query,(session['email'],new_admin,str(group_id)))
-  if len(cursor.fetchall() > 0):
+  if len(cursor.fetchall()) > 0:
     flash('You have already sent the admin designation request.', 'danger')
   else:
     q = "INSERT INTO designate_admin VALUES(%s,%s,%s);"
