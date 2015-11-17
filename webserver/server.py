@@ -636,6 +636,21 @@ def decline_admin(group_id):
   print 'Successfully deleted request'
   return redirect(url_for("home"))
 
+@app.route('/user_to_group_request/<int:group_id>', methods=["POST"])
+def user_to_group_request(group_id):
+  print "here"
+  message = request.form["message-" + str(group_id)]
+  print message
+  query = "SELECT * from requests_join WHERE requests_join.user_email = %s AND requests_join.group_id = %s;"
+  cursor = g.conn.execute(query, (session['email'], str(group_id)))
+  if len(cursor.fetchall()) > 0:
+    flash("A Request has already been sent to this Group!", "danger")
+  else:
+    query = "INSERT INTO requests_join VALUES(%s,%s,%s,%s);"
+    g.conn.execute(query, (session['email'], str(group_id), message, 'user_to_group'))
+    flash('Successfully Sent Request to Join Group', 'success')
+  return redirect(url_for('home'))
+
 if __name__ == "__main__":
   import click
 

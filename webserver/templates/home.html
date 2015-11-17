@@ -102,7 +102,7 @@
 			        <h4 class="modal-title">Request to Join: {{item.group_name}}</h4>
 			      </div>
 			      <div class="modal-body">
-			        <form id="user-req-group-{{item.group_id}}" method="POST" action="#">
+			        <form id="user-req-group-{{item.group_id}}" method="POST" action="{{url_for('user_to_group_request', group_id=item.group_id)}}">
 
 						    <div class="form-group">
 						    	<label class="control-label">Message</label>
@@ -119,8 +119,9 @@
 			</div>
 
 			<script>
-				$('#send').click(function() {
+				$('.send').click(function() {
 					var whichModal = $(this).attr('id');
+					console.log(whichModal);
 					if ($.trim($('#message-' + whichModal).val()) === '') {
 						alert('Include a message!');
 					}
