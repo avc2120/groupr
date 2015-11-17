@@ -581,7 +581,6 @@ def group_to_user_request(user_email):
 @app.route('/accept_request/<int:group_id>', methods=["GET"])
 def accept_request(group_id):
   global g, cur_group_data
-  flash('Accepted Group Request','success')
   query = "SELECT * FROM groups WHERE groups.group_id =%s;"
   cursor = g.conn.execute(query, (group_id,))
   result = cursor.fetchone()
@@ -594,8 +593,9 @@ def accept_request(group_id):
   g_dict['is_limited'] = result['is_limited']
   cur_group_data.append(g_dict)
   if(result['is_limited'] == True and get_group_member_number(group_id) == result['size_limit']):
-    flash('Group is at Capacity', 'caution')
+    flash('Group is at Capacity', 'warning')
   else:
+    flash('Accepted Group Request','success')
     query = "INSERT INTO belongs_to VALUES(%s, %s);"
     g.conn.execute(query, (session['email'], str(group_id)))
     print 'Successfully accepted request'
