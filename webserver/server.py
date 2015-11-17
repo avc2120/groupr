@@ -255,6 +255,7 @@ def get_group_member_number(group_id):
 
 @app.route("/creategroup/", methods=["POST", "GET"])
 def createGroup():
+  global g, cur_group_data
   if session.get('email') == None:
     return redirect(url_for('index'))
 
@@ -280,30 +281,44 @@ def createGroup():
       course_to_section_dict[course['course_id']] = sections
     return render_template("creategroup.html", groups=cur_group_data, courses=courses, c_to_s=course_to_section_dict)
 
-  global group_id, groupid_postid, cur_group_id
   group_id = str(rand_id())
   group_name = request.form.get('group_name')
   group_des = request.form.get('description')
   is_unlimited = request.form.get('is_unlimited')
-  group_lim = int(request.form.get('limit'))
+  group_lim = request.form.get('limit')
   group_status = request.form.get('optionsRadios')
-
-  is_limited = True
+  print is_unlimited
   if(is_unlimited == None):
-    islimited = False
+    is_limited = True
+  else:
+    is_limited = False
+  if(group_lim == ''):
+    group_lim = 1000
 
   print group_name, group_des, group_lim, group_status
-  print group_id, group_name, session["email"], group_des, int(group_lim), group_status
+  print group_id, group_name, session["email"], group_des, group_lim, group_status
   query = "INSERT INTO groups VALUES(%s,%s,%s,%s,%s,%s,%s);"
-  engine.execute(query, (group_id, group_name, session["email"], group_des, group_lim, is_limited, group_status))
-  print "Success!"
+  engine.execute(query, (group_id, session["email"], group_des, str(group_lim), is_limited, group_status, group_name))
+  print "Successfully created group!"
+  query = "INSERT INTO belongs_to VALUES(%s,%s);"
+  engine.execute(query, (session['email'], group_id))
+  print "Successfully belongs to group"
 
-  if(is_limited):
-    return render_template("group.html", user_email=session["email"], 
-      group_name=group_name, group_description=group_des, group_admin=session["email"], size_limit=group_lim)
-  else:
-    return render_template("group.html", user_email=session["email"], 
-      group_name=group_name, group_description=group_des, group_admin=session["email"])
+  query = "INSERT INTO containing VALUES (%s, %s);"
+  print request.form.get('section'), group_id
+  engine.execute(query, (request.form.get('section'), group_id))
+  print "Successfully added to containing"
+  g_dict = {}
+  g_dict['group_id'] = int(group_id)
+  g_dict['group_name'] = group_name
+  g_dict['user_email'] = session['email']
+  g_dict['description'] = group_des
+  g_dict['size_limit'] = int(group_lim)
+  g_dict['is_limited'] = is_limited
+  cur_group_data.append(g_dict)
+
+  print cur_group_data
+  return redirect(url_for("group", group_id=group_id))
 
 @app.route('/manage_group/<int:group_id>/')
 def manage_group(group_id):
@@ -314,6 +329,7 @@ def manage_group(group_id):
 
 @app.route('/group/<int:group_id>', methods=['GET','POST'])
 def group(group_id):
+  global g, cur_group_data
   if session.get('email') == None:
     return redirect(url_for('index'))
 
@@ -336,6 +352,7 @@ def group(group_id):
 
   # save on db queries by picking out correct data from data of all groups user belongs to
   for ind, group in enumerate(cur_group_data):
+    print(group)
     if group['group_id'] == group_id:
       g_dict = cur_group_data[ind]
       break
