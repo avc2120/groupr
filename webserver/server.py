@@ -393,7 +393,7 @@ def manage_group(group_id):
     group_lim = request.form.get('limit')
     if(is_unlimited == None):
       num_members = get_group_member_number(group_id)
-      if group_lim < num_members:
+      if int(group_lim) < num_members:
         flash('You cannot change group size to below the current number of members!', 'danger')
       else:
         query = "UPDATE groups SET is_limited=%s, size_limit=%s WHERE group_id=%s;"
